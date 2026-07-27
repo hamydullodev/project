@@ -110,9 +110,9 @@ BEST PRACTICES APPLIED
 - The model instance is cached per (model_name, device) via
   `functools.lru_cache`, mirroring `embeddings.py`'s pattern, so repeated
   `RerankerModel(...)` construction reuses already-loaded weights.
-- A candidate whose text can't be found (defensive — should not happen
-  if the caller populates `chunk_texts` from the same candidate list) is
-  logged and skipped rather than crashing the whole rerank call.
+- A candidate whose chunk data can't be found (defensive — should not
+  happen if the caller populates `chunks` from the same candidate list)
+  is logged and skipped rather than crashing the whole rerank call.
 """
 
 from __future__ import annotations
@@ -123,6 +123,7 @@ from typing import Optional
 import numpy as np
 
 from app.config import settings
+from app.database.models import ChunkRecord
 from app.retriever.hybrid_retriever import HybridSearchResult
 from app.utils.device import resolve_device
 from app.utils.logger import get_logger
@@ -131,15 +132,26 @@ logger = get_logger(__name__)
 
 
 class RerankedResult(HybridSearchResult):
-    """A hybrid search result augmented with its chunk text and cross-encoder score.
+    """A hybrid search result augmented with its full chunk data and cross-encoder score.
 
     Extends `HybridSearchResult` (rather than duplicating its fields) so
     every score computed along the way — dense, sparse, combined, and now
     reranker — survives to the Retrieval Debug page (Milestone 18)
     without any information being discarded at this stage.
+
+    The citation fields (`law_name`, `article_number`, `section`,
+    `page_number`) are copied from the `ChunkRecord` passed into
+    `rerank()` — `HybridRetriever` only ever sees bare chunk ids (Milestone
+    8), so this is the first point in the pipeline where a result carries
+    the metadata the prompt builder (Milestone 12) needs to construct a
+    correct citation.
     """
 
     text: str
+    law_name: Optional[str] = None
+    article_number: Optional[str] = None
+    section: Optional[str] = None
+    page_number: Optional[int] = None
     reranker_score: float = 0.0
 
 
@@ -175,16 +187,17 @@ class RerankerModel:
         self,
         query: str,
         candidates: list[HybridSearchResult],
-        chunk_texts: dict[str, str],
+        chunks: dict[str, ChunkRecord],
         top_k: Optional[int] = None,
     ) -> list[RerankedResult]:
         """Rerank `candidates` by cross-encoder relevance to `query`.
 
-        `chunk_texts` maps chunk_id -> chunk text; the caller (the RAG
+        `chunks` maps chunk_id -> `ChunkRecord`; the caller (the RAG
         pipeline, Milestone 14) is expected to have already hydrated the
-        hybrid retriever's chunk ids into text via
+        hybrid retriever's chunk ids via
         `MetadataRepository.get_chunks_by_ids()`. Returns the top `top_k`
-        candidates sorted by `reranker_score` descending.
+        candidates sorted by `reranker_score` descending, each carrying
+        its source `ChunkRecord`'s citation metadata.
         """
         top_k = top_k if top_k is not None else settings.rerank_top_k
 
@@ -194,13 +207,13 @@ class RerankerModel:
         pairs: list[tuple[str, str]] = []
         valid_candidates: list[HybridSearchResult] = []
         for candidate in candidates:
-            text = chunk_texts.get(candidate.chunk_id)
-            if text is None:
+            chunk = chunks.get(candidate.chunk_id)
+            if chunk is None:
                 logger.warning(
-                    "No text found for chunk_id=%s; skipping in reranking", candidate.chunk_id
+                    "No chunk data found for chunk_id=%s; skipping in reranking", candidate.chunk_id
                 )
                 continue
-            pairs.append((query, text))
+            pairs.append((query, chunk.text))
             valid_candidates.append(candidate)
 
         if not pairs:
@@ -212,7 +225,11 @@ class RerankerModel:
         reranked = [
             RerankedResult(
                 **candidate.model_dump(),
-                text=chunk_texts[candidate.chunk_id],
+                text=chunks[candidate.chunk_id].text,
+                law_name=chunks[candidate.chunk_id].law_name,
+                article_number=chunks[candidate.chunk_id].article_number,
+                section=chunks[candidate.chunk_id].section,
+                page_number=chunks[candidate.chunk_id].page_number,
                 reranker_score=float(score),
             )
             for candidate, score in zip(valid_candidates, scores)
