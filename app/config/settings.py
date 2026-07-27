@@ -151,6 +151,25 @@ class Settings(BaseSettings):
     dense_weight: float = Field(default=0.5, ge=0.0, le=1.0)
     sparse_weight: float = Field(default=0.5, ge=0.0, le=1.0)
 
+    # -- Query preprocessing & context compression ---------------------------------
+    max_query_length: int = Field(
+        default=1000, gt=0, description="Queries longer than this (characters) are truncated with a warning."
+    )
+    max_context_chars: int = Field(
+        default=6000,
+        gt=0,
+        description="Total character budget across all chunks passed to the LLM after "
+        "reranking; lowest-ranked chunks are dropped first if the reranked set exceeds it.",
+    )
+    context_similarity_threshold: float = Field(
+        default=0.6,
+        ge=0.0,
+        le=1.0,
+        description="Word-set Jaccard similarity above which a lower-ranked chunk is "
+        "considered redundant with an already-kept higher-ranked one (e.g. from "
+        "CHUNK_OVERLAP between adjacent sub-chunks of the same article) and dropped.",
+    )
+
     # -- Storage paths (raw strings from env; resolved to absolute Paths below) --
     vector_path: str = Field(default="indexes/faiss_index")
     bm25_path: str = Field(default="indexes/bm25_index.pkl")
