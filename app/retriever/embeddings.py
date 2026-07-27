@@ -164,6 +164,7 @@ from typing import Literal
 import numpy as np
 
 from app.config import settings
+from app.utils.device import resolve_device
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -211,20 +212,6 @@ class _QueryDocumentPrefixer:
         return text
 
 
-def _resolve_device(configured: str) -> str:
-    """Resolve "auto" to the best available accelerator; pass through others."""
-    if configured != "auto":
-        return configured
-
-    import torch
-
-    if torch.cuda.is_available():
-        return "cuda"
-    if torch.backends.mps.is_available():
-        return "mps"
-    return "cpu"
-
-
 @lru_cache(maxsize=4)
 def _load_sentence_transformer(model_name: str, device: str):
     """Load (and process-wide cache) a SentenceTransformer by (name, device).
@@ -269,7 +256,7 @@ class EmbeddingModel:
         batch_size: int = DEFAULT_BATCH_SIZE,
     ) -> None:
         self.model_name = model_name or settings.embedding_model
-        self.device = _resolve_device(device or settings.embedding_device)
+        self.device = resolve_device(device or settings.embedding_device)
         self.batch_size = batch_size
         self._prefixer = _QueryDocumentPrefixer(self.model_name)
         self._model = _load_sentence_transformer(self.model_name, self.device)

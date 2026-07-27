@@ -22,11 +22,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from app.retriever.embeddings import (
-    EmbeddingModel,
-    _QueryDocumentPrefixer,
-    _resolve_device,
-)
+from app.retriever.embeddings import EmbeddingModel, _QueryDocumentPrefixer
 
 SMALL_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
@@ -68,20 +64,8 @@ def test_prefixer_is_case_insensitive():
     assert prefixer.for_query("x") == "query: x"
 
 
-# ---------------------------------------------------------------------------
-# _resolve_device — pure logic
-# ---------------------------------------------------------------------------
-
-
-def test_resolve_device_passes_through_explicit_choice():
-    assert _resolve_device("cpu") == "cpu"
-    assert _resolve_device("cuda") == "cuda"
-    assert _resolve_device("mps") == "mps"
-
-
-def test_resolve_device_auto_returns_a_valid_device():
-    resolved = _resolve_device("auto")
-    assert resolved in ("cuda", "mps", "cpu")
+# Device resolution (`resolve_device`) now lives in app.utils.device and is
+# tested in tests/test_device.py, since app.reranker also depends on it.
 
 
 # ---------------------------------------------------------------------------
