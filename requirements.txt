@@ -1,0 +1,63 @@
+# ============================================================================
+# Hybrid RAG for Uzbek Law — dependency list
+#
+# Grouped by role in the pipeline so it's obvious *why* each package is here.
+# Versions are floor-pinned (>=) rather than exact-pinned: this is a local,
+# single-machine educational project, so we favor "get the latest compatible
+# build" over reproducible-to-the-patch-version installs. If you need fully
+# reproducible installs later, freeze this with `pip freeze > requirements.lock.txt`.
+# ============================================================================
+
+# --- Core config / validation ------------------------------------------------
+pydantic>=2.7
+pydantic-settings>=2.3
+python-dotenv>=1.0
+
+# --- Orchestration (text splitters, document schema, prompt templates) ------
+langchain>=0.2
+langchain-community>=0.2
+langchain-huggingface>=0.0.3
+langchain-text-splitters>=0.2
+
+# --- Embeddings & reranking (local, HuggingFace-hosted weights) -------------
+sentence-transformers>=3.0
+transformers>=4.42
+torch>=2.3
+
+# --- Dense vector index -------------------------------------------------------
+faiss-cpu>=1.8
+
+# --- Sparse (lexical) index ---------------------------------------------------
+rank_bm25>=0.2.2
+
+# --- Local LLM (Ollama) -------------------------------------------------------
+ollama>=0.2
+
+# --- Document parsing ----------------------------------------------------------
+pymupdf>=1.24          # PDF text/layout extraction
+python-docx>=1.1        # DOCX parsing
+beautifulsoup4>=4.12    # HTML parsing
+lxml>=5.2                # fast HTML/XML parser backend for bs4
+pytesseract>=0.3.10      # OCR (requires system Tesseract binary)
+pdf2image>=1.17          # render PDF pages to images for OCR fallback (requires poppler)
+
+# --- Storage --------------------------------------------------------------------
+# sqlite3 ships with the Python standard library — no package needed.
+
+# --- UI -----------------------------------------------------------------------
+streamlit>=1.36
+
+# --- Numerics / utilities -------------------------------------------------------
+numpy>=1.26
+pandas>=2.2
+tqdm>=4.66
+
+# --- Testing & evaluation --------------------------------------------------------
+pytest>=8.2
+scikit-learn>=1.5       # ranking-metric helpers used in retrieval evaluation
+
+# --- Optional: advanced layout-aware parsing ---------------------------------
+# Docling gives much better structure extraction for complex PDFs (tables,
+# multi-column layouts) than PyMuPDF alone, at the cost of a heavier install
+# and slower parsing. Uncomment if you ingest visually complex PDFs.
+# docling>=2.0

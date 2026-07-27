@@ -1,0 +1,31 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Virtual environment ---
+.venv/
+venv/
+env/
+
+# --- Environment / secrets ---
+.env
+
+# --- Generated data (rebuildable from documents/ via the indexing pipeline) ---
+indexes/*
+!indexes/.gitkeep
+data/*.db
+data/*.sqlite
+logs/*.log*
+
+# --- OS / editor ---
+.DS_Store
+.vscode/
+.idea/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
