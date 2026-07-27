@@ -162,6 +162,20 @@ class MetadataRepository:
             ).fetchone()
         return DocumentRecord.from_row(row) if row else None
 
+    def get_document_by_path(self, file_path: str) -> Optional[DocumentRecord]:
+        """Look up a document by source file path — the incremental-
+        indexing entry point (Milestone 10): "is this file already
+        tracked, and if so, under which document_id?" lets a changed
+        file be re-indexed IN PLACE (same document_id, replacing its old
+        chunks) rather than as a brand-new document that orphans the old
+        one's chunks and vectors.
+        """
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM documents WHERE file_path = ?;", (file_path,)
+            ).fetchone()
+        return DocumentRecord.from_row(row) if row else None
+
     def list_documents(self, status: Optional[str] = None) -> list[DocumentRecord]:
         with self._connect() as conn:
             if status is None:

@@ -138,9 +138,15 @@ class BM25IndexError(Exception):
 
 
 class BM25SparseIndex:
-    """Lexical (term-matching) index over chunk text, built with Okapi BM25."""
+    """Lexical (term-matching) index over chunk text, built with Okapi BM25.
 
-    def __init__(self) -> None:
+    Remembers the path it was constructed or loaded with (`self.path`),
+    the same way and for the same reason as `FAISSVectorStore` — see that
+    class's docstring.
+    """
+
+    def __init__(self, path: Optional[Path] = None) -> None:
+        self.path = path
         self._bm25 = None
         self._chunk_ids: list[str] = []
 
@@ -249,6 +255,7 @@ class BM25SparseIndex:
             tmp_path = Path(tmp_file.name)
 
         tmp_path.replace(index_path)
+        self.path = path or self.path  # remember this location for future unqualified save()s
         logger.info("Saved BM25 index (%d chunks) to %s", len(self), index_path)
 
     @classmethod
@@ -275,6 +282,7 @@ class BM25SparseIndex:
             raise BM25IndexError(f"BM25 index file at {index_path} has an unexpected format")
 
         store = cls.__new__(cls)
+        store.path = path
         store._bm25 = payload["bm25"]
         store._chunk_ids = payload["chunk_ids"]
 
@@ -292,4 +300,4 @@ class BM25SparseIndex:
         return path or settings.bm25_path_resolved
 
     def _resolve_path(self, path: Optional[Path]) -> Path:
-        return self._resolve_path_static(path)
+        return self._resolve_path_static(path or self.path)

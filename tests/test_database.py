@@ -83,6 +83,17 @@ def test_duplicate_file_hash_detected(repo: MetadataRepository):
     assert repo.get_document_by_hash("nonexistent-hash") is None
 
 
+def test_get_document_by_path(repo: MetadataRepository):
+    doc = _make_document()
+    repo.upsert_document(doc)
+
+    found = repo.get_document_by_path("/documents/raw/fuqorolik.txt")
+    assert found is not None
+    assert found.id == "doc-1"
+
+    assert repo.get_document_by_path("/nonexistent/path.txt") is None
+
+
 def test_duplicate_hash_insert_raises(repo: MetadataRepository):
     """The UNIQUE constraint on file_hash is the DB-level dedup guarantee —
     inserting two different documents with the same hash must fail even if

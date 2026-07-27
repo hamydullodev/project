@@ -47,10 +47,12 @@ INDEXES
 - `documents.file_hash` (UNIQUE): the primary dedup mechanism — an insert
   of a byte-identical file is rejected by the DB itself, not just by
   application logic, so the invariant holds even under concurrent access.
-- `documents.status`, `chunks.document_id`, `chunks.law_name`,
-  `chunks.article_number`: support the query patterns the app actually
-  needs (list pending docs, fetch a doc's chunks, filter by law/article on
-  the debug and statistics pages) in O(log n) instead of a full table scan.
+- `documents.file_path`, `documents.status`, `chunks.document_id`,
+  `chunks.law_name`, `chunks.article_number`: support the query patterns
+  the app actually needs (find a document by its source path during
+  incremental indexing, list pending docs, fetch a doc's chunks, filter
+  by law/article on the debug and statistics pages) in O(log n) instead
+  of a full table scan.
 """
 
 from __future__ import annotations
@@ -89,6 +91,7 @@ CREATE TABLE IF NOT EXISTS chunks (
 
 INDEXES = [
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_documents_file_hash ON documents(file_hash);",
+    "CREATE INDEX IF NOT EXISTS idx_documents_file_path ON documents(file_path);",
     "CREATE INDEX IF NOT EXISTS idx_documents_status ON documents(status);",
     "CREATE INDEX IF NOT EXISTS idx_chunks_document_id ON chunks(document_id);",
     "CREATE INDEX IF NOT EXISTS idx_chunks_law_name ON chunks(law_name);",

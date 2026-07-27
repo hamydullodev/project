@@ -147,12 +147,25 @@ class VectorStoreError(Exception):
 
 
 class FAISSVectorStore:
-    """Dense vector index over chunk embeddings, with a persisted chunk_id mapping."""
+    """Dense vector index over chunk embeddings, with a persisted chunk_id mapping.
 
-    def __init__(self, dimension: int) -> None:
+    Remembers the path it was constructed or loaded with (`self.path`) so
+    that `save()` called with no argument writes back to the SAME
+    location by default, rather than silently falling back to the
+    global `settings.vector_path_resolved` default. This matters for any
+    caller managing multiple, differently-located indexes (e.g. tests
+    isolating themselves to a temp directory) — without it, an
+    unqualified `save()` call from such code would write into the real
+    project's `indexes/` directory instead of the caller's intended
+    location, exactly the kind of silent cross-contamination bug this
+    attribute exists to prevent.
+    """
+
+    def __init__(self, dimension: int, path: Optional[Path] = None) -> None:
         import faiss
 
         self.dimension = dimension
+        self.path = path
         self._index = faiss.IndexIDMap(faiss.IndexFlatIP(dimension))
         self._chunk_id_to_int: dict[str, int] = {}
         self._int_to_chunk_id: dict[int, str] = {}
@@ -278,6 +291,7 @@ class FAISSVectorStore:
 
         tmp_index_path.replace(index_path)
         tmp_meta_path.replace(meta_path)
+        self.path = path or self.path  # remember this location for future unqualified save()s
         logger.info("Saved FAISS index (%d vectors) to %s", len(self), index_path)
 
     @classmethod
@@ -326,6 +340,7 @@ class FAISSVectorStore:
 
         store = cls.__new__(cls)
         store.dimension = meta["dimension"]
+        store.path = path
         store._index = index
         store._next_id = meta["next_id"]
         store._chunk_id_to_int = {k: int(v) for k, v in meta["chunk_id_to_int"].items()}
@@ -346,4 +361,4 @@ class FAISSVectorStore:
         return Path(str(base) + ".faiss"), Path(str(base) + ".meta.json")
 
     def _resolve_paths(self, path: Optional[Path]) -> tuple[Path, Path]:
-        return self._resolve_paths_static(path)
+        return self._resolve_paths_static(path or self.path)
