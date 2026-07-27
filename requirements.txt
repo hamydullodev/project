@@ -34,12 +34,12 @@ rank_bm25>=0.2.2
 ollama>=0.2
 
 # --- Document parsing ----------------------------------------------------------
-pymupdf>=1.24          # PDF text/layout extraction
+pymupdf>=1.24          # PDF text/layout extraction AND page rendering for OCR fallback
 python-docx>=1.1        # DOCX parsing
 beautifulsoup4>=4.12    # HTML parsing
 lxml>=5.2                # fast HTML/XML parser backend for bs4
-pytesseract>=0.3.10      # OCR (requires system Tesseract binary)
-pdf2image>=1.17          # render PDF pages to images for OCR fallback (requires poppler)
+pytesseract>=0.3.10      # OCR (requires system Tesseract binary: `brew install tesseract`)
+Pillow>=10.0              # image handling for the OCR fallback (PyMuPDF pixmap -> PIL -> pytesseract)
 
 # --- Storage --------------------------------------------------------------------
 # sqlite3 ships with the Python standard library — no package needed.
