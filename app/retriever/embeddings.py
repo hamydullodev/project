@@ -103,7 +103,8 @@ DISADVANTAGES
 
 KNOWN ISSUE: bge-m3 ON LOW-RAM MACHINES (observed on this dev machine)
 ---------------------------------------------------------------------------
-`BAAI/bge-m3` (the spec's example default, ~2.3GB of weights) was tested
+`BAAI/bge-m3` (the original design spec's example model, ~2.3GB of
+weights — NOT this project's configured default, see below) was tested
 on this project's development machine — an 8GB-RAM Mac — and produced two
 separate problems worth recording plainly rather than glossing over:
 

@@ -113,11 +113,18 @@ class Settings(BaseSettings):
     llm_max_tokens: int = Field(default=1024, gt=0)
 
     # -- Embedding model (dense retrieval) -----------------------------------
+    # Defaults to a small (~470MB) multilingual model rather than the
+    # heavier BAAI/bge-m3 (~2.3GB) named in the original spec: bge-m3
+    # caused severe swap-thrashing on this project's 8GB-RAM dev machine
+    # (see app/retriever/embeddings.py's module docstring for the full
+    # investigation). Swap to bge-m3 or intfloat/multilingual-e5-large in
+    # .env on a machine with more RAM headroom (16GB+ recommended) for
+    # better retrieval quality.
     embedding_model: str = Field(
-        default="BAAI/bge-m3",
+        default="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
         description="HuggingFace sentence-embedding model id. Must support "
         "Uzbek/multilingual text (e.g. BAAI/bge-m3, "
-        "intfloat/multilingual-e5-large).",
+        "intfloat/multilingual-e5-large, or this lighter default).",
     )
     embedding_device: Literal["auto", "cpu", "cuda", "mps"] = "auto"
 

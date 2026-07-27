@@ -1,16 +1,17 @@
 """
 Unit tests for app.retriever.embeddings.
 
-Deliberately uses a SMALL multilingual model
-(sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2, ~470MB)
-rather than the project's configured default (BAAI/bge-m3, ~2.3GB) for
-model-loading tests. On this development machine (8GB RAM), loading
-bge-m3 caused severe swap thrashing (confirmed via `vm_stat`/
-`sysctl vm.swapusage` — 6.9GB of 8GB swap already in use) and made both
-`mps` and `cpu` device loading impractically slow — not a bug in this
-module, but a real resource constraint worth keeping test runs fast
-despite. See embeddings.py's module docstring for the documented
-system-requirements guidance this finding produced.
+Explicitly pins the SMALL multilingual model
+(sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2, ~470MB) —
+which also happens to be this project's configured default — rather than
+relying on whatever `EMBEDDING_MODEL` a user's `.env` might be set to
+(e.g. the heavier `BAAI/bge-m3`, ~2.3GB). On this development machine
+(8GB RAM), loading bge-m3 caused severe swap thrashing (confirmed via
+`vm_stat`/`sysctl vm.swapusage` — 6.9GB of 8GB swap already in use) and
+made both `mps` and `cpu` device loading impractically slow — not a bug
+in this module, but a real resource constraint that's exactly why the
+project default was changed to this smaller model. See
+embeddings.py's module docstring for the full investigation.
 
 Tests that don't need a loaded model at all (the prefix logic, device
 resolution) are pure unit tests with no model I/O.
