@@ -96,6 +96,27 @@ ALTERNATIVES CONSIDERED
   per the project's "fully local, no external API" requirement — the
   entire reason Ollama is the only supported backend here.
 
+KNOWN ISSUE: SMALL LOCAL MODELS CAN MISFIRE ON THE NOT-FOUND INSTRUCTION
+---------------------------------------------------------------------------
+While building Milestone 14's end-to-end pipeline tests, `llama3.2:3b`
+(this project's default `LLM_MODEL`) was observed to sometimes open its
+response with the system prompt's exact NOT_FOUND fallback phrase
+(`app.prompts.templates.NOT_FOUND_MESSAGE_UZ`) and then, contradictorily,
+paste the raw retrieved sources verbatim right after it — as if it
+recognized the phrase from its instructions but misapplied when to use
+it. This reproduced reliably with a sparse context (1-3 short chunks) and
+intermittently even with a more realistic 5-chunk context, but did NOT
+reproduce across repeated tries against this project's real, full-size
+corpus with genuinely representative ~800-character chunks. This looks
+like small-model (3B parameter) instruction-following unreliability under
+certain context shapes, not a deterministic bug triggered by any specific
+condition this code could detect and work around. If you see garbled or
+self-contradictory answers in practice, trying a larger model (e.g.
+`qwen2.5:7b`, RAM permitting — see `embeddings.py`'s RAM-constraint notes
+for this project's dev machine) is the most direct fix; this is a model-
+capability limitation, not something `OllamaLLM` or the prompt templates
+can fully compensate for in code.
+
 BEST PRACTICES APPLIED
 ------------------------
 - Every public method wraps Ollama-specific exceptions

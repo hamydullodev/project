@@ -108,6 +108,21 @@ family). If you try a heavier model and hit the same hang/thrashing:
   hang in testing, `cpu` at least made (slow) forward progress.
 - `intfloat/multilingual-e5-base` (~1.1GB) is a reasonable middle ground.
 
+### A note on small local LLMs and citation reliability
+
+The default `LLM_MODEL`, `llama3.2:3b`, is small (3B parameters) and can
+occasionally produce self-contradictory answers — e.g. opening with the
+"I could not find this information" fallback phrase and then pasting the
+retrieved sources verbatim right after it anyway. This was observed
+during testing with a sparse retrieved context, and did not reproduce
+across repeated tries against the full real corpus with realistically-
+sized chunks — see `app/llm/ollama_client.py`'s docstring for the full
+investigation. If you see garbled or contradictory answers in practice,
+the most direct fix is a larger model: `qwen2.5:7b` or similar, RAM
+permitting (see the embedding-model RAM note above for this project's own
+constraints). This is a model-capability limitation, not a bug in the
+prompt or pipeline code.
+
 ## Configuration
 
 All configuration lives in `.env` (see `.env.example` for every key and its
