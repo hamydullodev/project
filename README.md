@@ -69,8 +69,13 @@ pip install -r requirements.txt
 
 cp .env.example .env               # then edit .env if you want non-default models
 
-python run.py                      # smoke-tests configuration loading
+python run.py                      # validates config, then launches the Streamlit UI
 ```
+
+`python run.py` opens the app at http://localhost:8501. Pages beyond
+Home and Settings are placeholders until their own milestone lands (see
+Roadmap below) — the full navigation shell is there from the start, each
+page just says which milestone fills it in.
 
 ### Local LLM (Ollama)
 
