@@ -83,6 +83,30 @@ ollama pull llama3.2:3b            # or qwen2.5, mistral, gemma2, deepseek-r1 ..
 
 Set `LLM_MODEL` in `.env` to match whichever tag you pulled.
 
+### A note on RAM and the embedding model
+
+The spec's example embedding model, `BAAI/bge-m3`, is ~2.3GB of weights
+and needs roughly double that in RAM transiently while loading. On this
+project's own 8GB-RAM development machine, loading `bge-m3` hung
+indefinitely on `EMBEDDING_DEVICE=mps` and thrashed (severe swapping,
+10+ minutes without completing) on `EMBEDDING_DEVICE=cpu` — the machine
+was already low on free RAM, and a multi-GB model load pushed it into
+swap. This is a resource constraint, not a bug: smaller models (see
+below) loaded quickly and correctly on the same machine.
+
+If you hit this on your own machine:
+- Close other memory-heavy applications before the first `bge-m3` load
+  (subsequent loads reuse the HuggingFace cache, but still need the RAM
+  headroom to deserialize the checkpoint into memory each process start).
+- Prefer `EMBEDDING_DEVICE=cpu` over `mps` — `mps` produced an outright
+  hang in testing, `cpu` at least made (slow) forward progress.
+- For local development/iteration, consider a lighter model:
+  `intfloat/multilingual-e5-base` (~1.1GB) or
+  `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (~470MB —
+  this is what the project's own test suite uses for exactly this
+  reason). Reserve `bge-m3` / `multilingual-e5-large` for a machine with
+  16GB+ RAM.
+
 ## Configuration
 
 All configuration lives in `.env` (see `.env.example` for every key and its
