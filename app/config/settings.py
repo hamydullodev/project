@@ -128,6 +128,11 @@ class Settings(BaseSettings):
     # -- Chunking -------------------------------------------------------------
     chunk_size: int = Field(default=800, gt=0)
     chunk_overlap: int = Field(default=150, ge=0)
+    chunking_strategy: Literal["character", "token"] = Field(
+        default="character",
+        description="How chunk_size/chunk_overlap are measured: raw "
+        "characters, or an approximate whitespace/punctuation token count.",
+    )
 
     # -- Retrieval --------------------------------------------------------------
     top_k: int = Field(
