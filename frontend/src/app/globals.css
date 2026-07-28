@@ -1,0 +1,146 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-gradient-from: var(--gradient-from);
+  --color-gradient-to: var(--gradient-to);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+ * Design tokens for the "premium AI product" aesthetic (ChatGPT/Claude/
+ * Perplexity/Linear/Vercel/Raycast-grade) - a refined indigo-violet accent
+ * over a neutral surface, deliberately never pure black in dark mode (a
+ * true #000 background flattens depth and reads as unfinished; a dark
+ * surface with a faint blue-violet undertone lets card elevation actually
+ * read as elevation). --gradient-from/--gradient-to are extra tokens (not
+ * part of shadcn's own convention) for the hero/button glow accents this
+ * project's components use on top of the standard palette below.
+ */
+:root {
+  --background: #ffffff;
+  --foreground: #0f1117;
+  --card: #ffffff;
+  --card-foreground: #0f1117;
+  --popover: #ffffff;
+  --popover-foreground: #0f1117;
+  --primary: #5b4fe9;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f2fa;
+  --secondary-foreground: #0f1117;
+  --muted: #f5f5f8;
+  --muted-foreground: #6b7280;
+  --accent: #eef0ff;
+  --accent-foreground: #3730a3;
+  --destructive: #dc2626;
+  --border: #e5e5ea;
+  --input: #e5e5ea;
+  --ring: #5b4fe9;
+  --chart-1: #5b4fe9;
+  --chart-2: #4f8ef7;
+  --chart-3: #8b5cf6;
+  --chart-4: #22c55e;
+  --chart-5: #f59e0b;
+  --radius: 0.75rem;
+  --gradient-from: #6d5ef0;
+  --gradient-to: #4f8ef7;
+  --sidebar: #fafafc;
+  --sidebar-foreground: #0f1117;
+  --sidebar-primary: #5b4fe9;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eef0ff;
+  --sidebar-accent-foreground: #3730a3;
+  --sidebar-border: #e5e5ea;
+  --sidebar-ring: #5b4fe9;
+}
+
+.dark {
+  --background: #0b0b12;
+  --foreground: #f2f2f7;
+  --card: #131320;
+  --card-foreground: #f2f2f7;
+  --popover: #131320;
+  --popover-foreground: #f2f2f7;
+  --primary: #7c6ff0;
+  --primary-foreground: #0b0b12;
+  --secondary: #1a1a28;
+  --secondary-foreground: #f2f2f7;
+  --muted: #17171f;
+  --muted-foreground: #9a99ac;
+  --accent: #1d1b33;
+  --accent-foreground: #c7c2ff;
+  --destructive: #f87171;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #7c6ff0;
+  --chart-1: #7c6ff0;
+  --chart-2: #4f8ef7;
+  --chart-3: #a78bfa;
+  --chart-4: #4ade80;
+  --chart-5: #fbbf24;
+  --gradient-from: #7c6ff0;
+  --gradient-to: #4f8ef7;
+  --sidebar: #101018;
+  --sidebar-foreground: #f2f2f7;
+  --sidebar-primary: #7c6ff0;
+  --sidebar-primary-foreground: #0b0b12;
+  --sidebar-accent: #1d1b33;
+  --sidebar-accent-foreground: #c7c2ff;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #7c6ff0;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
