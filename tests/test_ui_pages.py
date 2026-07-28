@@ -176,18 +176,19 @@ def test_settings_page_connectivity_button_does_not_crash():
 
 
 # ---------------------------------------------------------------------------
-# Placeholder pages (Milestones 18-19)
+# Placeholder pages (Milestone 19)
 # ---------------------------------------------------------------------------
-# "chat" and "upload" are deliberately excluded here: they were
-# placeholders when this file was written for Milestone 15, but
-# Milestones 16/17 replaced them with real pages — see
-# tests/test_chat_page.py and tests/test_upload_page.py for their
-# coverage now.
+# "chat", "upload", "index_management", and "retrieval_debug" are
+# deliberately excluded here: they were placeholders when this file was
+# written for Milestone 15, but Milestones 16/17/18 replaced them with
+# real pages — see tests/test_chat_page.py, tests/test_upload_page.py,
+# tests/test_index_management_page.py, and tests/test_retrieval_debug_page.py
+# for their coverage now.
 
 
 @pytest.mark.parametrize(
     "module_name",
-    ["index_management", "retrieval_debug", "statistics"],
+    ["statistics"],
 )
 def test_placeholder_page_renders_without_errors(module_name: str):
     at = AppTest.from_file(str(PAGES_DIR / f"{module_name}.py"))

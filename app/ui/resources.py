@@ -74,6 +74,53 @@ def get_pipeline():
     return RAGPipeline()
 
 
+def get_indexing_pipeline():
+    """A fresh `IndexingPipeline` for THIS call — deliberately NOT cached.
+
+    Unlike `get_pipeline()` (the query-answering `RAGPipeline`), this is a
+    plain, uncached function returning a brand-new `IndexingPipeline`
+    (Milestone 10) every time it's called. Index management actions
+    (build/update/rebuild/delete — Milestone 18) are infrequent, explicit
+    button clicks, not something that fires on every rerun the way a
+    cached resource is meant to protect against — so there's no real cost
+    problem to solve by caching here. What matters more is correctness:
+    a cached `IndexingPipeline` could hold an in-memory FAISS/BM25 state
+    that's gone stale relative to what's actually on disk (e.g. if
+    indexing happened via a different code path, or a prior action in
+    this same page already changed it) — always constructing fresh means
+    every action starts from the CURRENT on-disk index/metadata state.
+
+    This is cheap even though it's uncached: `IndexingPipeline`'s default
+    `EmbeddingModel` construction goes through
+    `get_default_embedding_model()` (Milestone 5), which has its own
+    process-wide `functools.lru_cache` — so the expensive model weights
+    are still only loaded once per process, just via a different caching
+    layer than `st.cache_resource`. Only the (comparatively cheap) FAISS/
+    BM25/SQLite loading repeats per call.
+    """
+    from app.ingestion import IndexingPipeline
+
+    return IndexingPipeline()
+
+
+def invalidate_query_pipeline_cache() -> None:
+    """Clear the cached `RAGPipeline` (`get_pipeline()`) after an index change.
+
+    `get_pipeline()`'s `RAGPipeline` holds its OWN in-memory
+    `FAISSVectorStore`/`BM25SparseIndex`, loaded once and cached for the
+    whole process (that's the point — see `get_pipeline`'s own
+    docstring). If the Index management page indexes new content while a
+    Chat session already has a cached `RAGPipeline` from before that
+    change, the Chat page would keep answering from the OLD in-memory
+    index until the process restarts — silently stale, with no error to
+    signal it. Any index-modifying action (sync/rebuild/delete) in
+    `index_management.py` calls this afterward so the NEXT chat message
+    reconstructs `RAGPipeline` from the just-updated on-disk state
+    instead.
+    """
+    get_pipeline.clear()
+
+
 def check_ollama_status() -> tuple[bool, list[str], str]:
     """Check Ollama connectivity right now (never cached — see module docstring).
 

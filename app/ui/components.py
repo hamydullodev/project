@@ -24,7 +24,11 @@ theme-aware primitives is the more robust choice, not a shortcut.
 
 from __future__ import annotations
 
+from typing import Optional
+
 import streamlit as st
+
+from app.reranker import RerankedResult
 
 APP_TITLE = "Oʻzbekiston Qonunchiligi boʻyicha AI Yordamchi"
 APP_ICON = "⚖️"
@@ -43,6 +47,47 @@ def status_badge(is_ok: bool, ok_label: str, fail_label: str) -> None:
         st.success(f"✅ {ok_label}")
     else:
         st.error(f"❌ {fail_label}")
+
+
+def render_chunk_card(
+    index: int, chunk: RerankedResult, status_label: Optional[str] = None
+) -> None:
+    """A single expandable card for one retrieved/reranked chunk.
+
+    Shared by the Chat page (Milestone 16, as its "Manbalar"/source
+    cards) and the Retrieval Debug page (Milestone 18, as its per-chunk
+    detail view) — both need the identical presentation of one
+    `RerankedResult`'s citation metadata, scores, and text, and defining
+    it once here means a future visual tweak (e.g. adding another score
+    field) only needs to happen in one place instead of drifting between
+    two pages that were copy-pasted from each other.
+
+    `status_label` is optional and Debug-page-specific (e.g. "✅
+    Saqlangan" / "🔁 Takror (dedup)" / "✂️ Byudjet chegarasi" — see
+    `retrieval_debug.py`) — the Chat page never passes it, since a
+    rendered source card there was by definition kept.
+    """
+    label_parts = [chunk.law_name or "Nomaʼlum qonun"]
+    if chunk.article_number:
+        label_parts.append(f"{chunk.article_number}-modda")
+    label = f"{index}. " + " — ".join(label_parts)
+    if status_label:
+        label += f" ({status_label})"
+
+    with st.expander(label):
+        col1, col2, col3, col4 = st.columns(4)
+        dense_label = f"{chunk.dense_score:.3f}" if chunk.dense_score is not None else "—"
+        sparse_label = f"{chunk.sparse_score:.3f}" if chunk.sparse_score is not None else "—"
+        col1.caption(f"Dense: {dense_label}")
+        col2.caption(f"Sparse: {sparse_label}")
+        col3.caption(f"Combined: {chunk.combined_score:.3f}")
+        col4.caption(f"Rerank: {chunk.reranker_score:.3f}")
+
+        if chunk.section:
+            st.caption(f"Boʻlim: {chunk.section}")
+        if chunk.page_number is not None:
+            st.caption(f"Sahifa: {chunk.page_number}")
+        st.write(chunk.text)
 
 
 def not_yet_available(milestone_label: str) -> None:

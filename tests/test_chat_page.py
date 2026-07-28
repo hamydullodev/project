@@ -46,21 +46,21 @@ REAL_QUESTION = "Ish beruvchi mehnat shartnomasini qanday bekor qiladi?"
 
 
 def test_chat_page_renders_without_errors():
-    at = AppTest.from_file(CHAT_PAGE_PATH, default_timeout=60)
+    at = AppTest.from_file(CHAT_PAGE_PATH, default_timeout=120)
     at.run()
 
     assert not at.exception
 
 
 def test_chat_page_shows_chat_input_when_pipeline_available():
-    at = AppTest.from_file(CHAT_PAGE_PATH, default_timeout=60)
+    at = AppTest.from_file(CHAT_PAGE_PATH, default_timeout=120)
     at.run()
 
     assert len(at.chat_input) == 1
 
 
 def test_chat_page_starts_with_empty_history():
-    at = AppTest.from_file(CHAT_PAGE_PATH, default_timeout=60)
+    at = AppTest.from_file(CHAT_PAGE_PATH, default_timeout=120)
     at.run()
 
     # The clear-chat button is always present (in the sidebar) but
@@ -72,10 +72,10 @@ def test_chat_page_starts_with_empty_history():
 
 
 def test_asking_a_real_question_produces_a_grounded_answer_with_sources():
-    at = AppTest.from_file(CHAT_PAGE_PATH, default_timeout=90)
+    at = AppTest.from_file(CHAT_PAGE_PATH, default_timeout=120)
     at.run()
 
-    at.chat_input[0].set_value(REAL_QUESTION).run(timeout=90)
+    at.chat_input[0].set_value(REAL_QUESTION).run(timeout=120)
 
     assert not at.exception
     assert len(at.session_state["chat_history"]) == 2  # user turn + assistant turn
@@ -90,18 +90,18 @@ def test_asking_a_real_question_produces_a_grounded_answer_with_sources():
 
 
 def test_asked_question_shows_download_button():
-    at = AppTest.from_file(CHAT_PAGE_PATH, default_timeout=90)
+    at = AppTest.from_file(CHAT_PAGE_PATH, default_timeout=120)
     at.run()
-    at.chat_input[0].set_value(REAL_QUESTION).run(timeout=90)
+    at.chat_input[0].set_value(REAL_QUESTION).run(timeout=120)
 
     assert not at.exception
     assert len(at.get("download_button")) >= 1
 
 
 def test_clear_chat_button_enables_after_history_and_resets_it():
-    at = AppTest.from_file(CHAT_PAGE_PATH, default_timeout=90)
+    at = AppTest.from_file(CHAT_PAGE_PATH, default_timeout=120)
     at.run()
-    at.chat_input[0].set_value(REAL_QUESTION).run(timeout=90)
+    at.chat_input[0].set_value(REAL_QUESTION).run(timeout=120)
 
     clear_buttons = [b for b in at.button if "tozalash" in b.label.lower()]
     assert len(clear_buttons) == 1

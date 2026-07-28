@@ -53,7 +53,7 @@ import streamlit as st
 from app.llm import LLMConnectionError, LLMModelNotFoundError
 from app.rag import EmptyQueryError
 from app.reranker import RerankedResult
-from app.ui.components import render_page_header
+from app.ui.components import render_chunk_card, render_page_header
 from app.ui.resources import get_pipeline
 
 CHAT_HISTORY_KEY = "chat_history"
@@ -104,7 +104,7 @@ def _render_history() -> None:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
             if message.get("sources"):
-                _render_sources(message["sources"], key_prefix=f"history_{i}")
+                _render_sources(message["sources"])
             if message["role"] == "assistant":
                 _render_answer_actions(message["content"], key_prefix=f"history_{i}")
 
@@ -128,7 +128,7 @@ def _handle_new_question(pipeline, user_input: str) -> None:
         sources = context.compression.kept
 
         if sources:
-            _render_sources(sources, key_prefix="new")
+            _render_sources(sources)
         new_index = len(st.session_state[CHAT_HISTORY_KEY])
         _render_answer_actions(answer_text, key_prefix=f"new_{new_index}")
 
@@ -149,30 +149,10 @@ def _as_text_generator(stream: Iterator[str]) -> Iterator[str]:
     yield from stream
 
 
-def _render_sources(sources: list[RerankedResult], key_prefix: str) -> None:
+def _render_sources(sources: list[RerankedResult]) -> None:
     st.markdown(f"**📚 Manbalar** ({len(sources)} ta)")
     for i, source in enumerate(sources, start=1):
-        label_parts = [source.law_name or "Nomaʼlum qonun"]
-        if source.article_number:
-            label_parts.append(f"{source.article_number}-modda")
-        label = f"{i}. " + " — ".join(label_parts)
-
-        with st.expander(label):
-            _render_source_scores(source)
-            if source.section:
-                st.caption(f"Boʻlim: {source.section}")
-            if source.page_number is not None:
-                st.caption(f"Sahifa: {source.page_number}")
-            st.write(source.text)
-
-
-def _render_source_scores(source: RerankedResult) -> None:
-    col1, col2, col3 = st.columns(3)
-    dense_label = f"{source.dense_score:.3f}" if source.dense_score is not None else "—"
-    sparse_label = f"{source.sparse_score:.3f}" if source.sparse_score is not None else "—"
-    col1.caption(f"Dense: {dense_label}")
-    col2.caption(f"Sparse: {sparse_label}")
-    col3.caption(f"Rerank: {source.reranker_score:.3f}")
+        render_chunk_card(i, source)
 
 
 def _render_answer_actions(answer_text: str, key_prefix: str) -> None:
