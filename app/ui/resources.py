@@ -47,6 +47,33 @@ def get_repo() -> MetadataRepository:
     return MetadataRepository()
 
 
+@st.cache_resource(show_spinner="Yordamchi tayyorlanmoqda (birinchi marta biroz vaqt olishi mumkin)...")
+def get_pipeline():
+    """The shared RAGPipeline, constructed once per app process.
+
+    `RAGPipeline()` (Milestone 14) eagerly loads the embedding model and
+    reranker (real, multi-second costs — see Milestones 5 and 9) and
+    checks Ollama connectivity at construction. Caching this the same way
+    as `get_repo()` is *why* the Chat page (Milestone 16) can respond
+    quickly after the first load — without it, every single chat message
+    would re-pay all of that startup cost.
+
+    Deliberately NOT wrapped in try/except here: if construction fails
+    (Ollama unreachable, configured model not pulled — `OllamaLLM` raises
+    `LLMConnectionError`/`LLMModelNotFoundError`, Milestone 13), Streamlit
+    does not cache a raised exception — the NEXT call to `get_pipeline()`
+    will retry construction from scratch. That is exactly the right
+    behavior for "Ollama was down, the user just started it": the retry
+    happens automatically on the next rerun rather than requiring a
+    stale failure to somehow be invalidated. The caller (`chat.py`)
+    is responsible for catching the exception and showing a clear
+    message — this function's only job is caching the success case.
+    """
+    from app.rag import RAGPipeline
+
+    return RAGPipeline()
+
+
 def check_ollama_status() -> tuple[bool, list[str], str]:
     """Check Ollama connectivity right now (never cached — see module docstring).
 
