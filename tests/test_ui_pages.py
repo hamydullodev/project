@@ -134,7 +134,7 @@ def test_home_page_warns_when_no_documents_indexed(isolated_repo):
     at.run()
 
     warning_text = " ".join(w.value for w in at.warning)
-    assert "indeklanmagan" in warning_text or "boshlang" in warning_text
+    assert "indekslanmagan" in warning_text or "boshlang" in warning_text
 
 
 def test_home_page_quick_links_present(isolated_repo):
@@ -176,27 +176,15 @@ def test_settings_page_connectivity_button_does_not_crash():
 
 
 # ---------------------------------------------------------------------------
-# Placeholder pages (Milestone 19)
+# Placeholder pages
 # ---------------------------------------------------------------------------
-# "chat", "upload", "index_management", and "retrieval_debug" are
-# deliberately excluded here: they were placeholders when this file was
-# written for Milestone 15, but Milestones 16/17/18 replaced them with
-# real pages — see tests/test_chat_page.py, tests/test_upload_page.py,
-# tests/test_index_management_page.py, and tests/test_retrieval_debug_page.py
-# for their coverage now.
-
-
-@pytest.mark.parametrize(
-    "module_name",
-    ["statistics"],
-)
-def test_placeholder_page_renders_without_errors(module_name: str):
-    at = AppTest.from_file(str(PAGES_DIR / f"{module_name}.py"))
-    at.run()
-
-    assert not at.exception
-    info_text = " ".join(i.value for i in at.info)
-    assert "tayyor emas" in info_text
+# Every page in the spec's navigation is now a real page (Milestones
+# 16/17/18/19 replaced the last placeholders) — see tests/test_chat_page.py,
+# tests/test_upload_page.py, tests/test_index_management_page.py,
+# tests/test_retrieval_debug_page.py, and tests/test_statistics_page.py for
+# their coverage now. No placeholder-page test remains; this section is
+# kept (empty of parametrized cases) as a marker for where such a test
+# would go if a future page is added as a placeholder first.
 
 
 # ---------------------------------------------------------------------------

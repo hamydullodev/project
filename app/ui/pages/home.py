@@ -75,7 +75,7 @@ def _render_corpus_overview() -> None:
 
     if not chunks_by_law:
         st.warning(
-            "Hozircha hech qanday hujjat indeklanmagan. "
+            "Hozircha hech qanday hujjat indekslanmagan. "
             "**Hujjat yuklash** yoki **Indeksni boshqarish** sahifasidan boshlang."
         )
         return
