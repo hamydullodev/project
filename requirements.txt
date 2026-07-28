@@ -45,7 +45,11 @@ Pillow>=10.0              # image handling for the OCR fallback (PyMuPDF pixmap 
 # sqlite3 ships with the Python standard library — no package needed.
 
 # --- UI -----------------------------------------------------------------------
-streamlit>=1.36
+streamlit>=1.36            # internal/debug UI: Index management, Retrieval Debug, Statistics
+
+# --- API (backend for the Next.js frontend) -----------------------------------
+fastapi>=0.115
+uvicorn[standard]>=0.30    # ASGI server; [standard] pulls in uvloop/httptools for real speed
 
 # --- Numerics / utilities -------------------------------------------------------
 numpy>=1.26
@@ -55,6 +59,7 @@ tqdm>=4.66
 # --- Testing & evaluation --------------------------------------------------------
 pytest>=8.2
 scikit-learn>=1.5       # ranking-metric helpers used in retrieval evaluation
+httpx>=0.27              # required by FastAPI's TestClient (tests/test_api.py)
 
 # --- Optional: advanced layout-aware parsing ---------------------------------
 # Docling gives much better structure extraction for complex PDFs (tables,

@@ -251,6 +251,28 @@ class RAGPipeline:
             answer_found=NOT_FOUND_MESSAGE_UZ not in answer_text,
         )
 
+    def stream_from_context(self, context: RetrievalContext) -> Iterator[str]:
+        """Stream an answer for an ALREADY-RETRIEVED `RetrievalContext`.
+
+        Split out from `ask_stream()` (which still calls this) so a caller
+        that needs `retrieve()` and the streaming LLM call to happen at
+        DIFFERENT points can do so — the motivating case is the FastAPI
+        backend (`api/routers/ask.py`, added alongside the Next.js
+        frontend): an HTTP route must be able to return a synchronous
+        400/503 error for a retrieval-time failure (e.g. `EmptyQueryError`)
+        BEFORE it starts a streaming response — once a `StreamingResponse`
+        begins, the HTTP status code is already committed and can't be
+        changed. That route calls `retrieve()` itself, handles its own
+        errors with proper status codes, and only calls this method once
+        it's ready to commit to streaming.
+        """
+        if not context.compression.kept:
+            logger.info("No relevant sources found for query=%r; skipping LLM call.", context.query)
+            return iter([NOT_FOUND_MESSAGE_UZ])
+
+        messages = build_messages(context.query, context.compression.kept)
+        return self.llm.stream(messages)
+
     def ask_stream(self, raw_query: str) -> tuple[RetrievalContext, Iterator[str]]:
         """Answer `raw_query`, streaming the answer text as it's generated.
 
@@ -261,10 +283,4 @@ class RAGPipeline:
         it (what the Chat UI, Milestone 16, needs for a typing effect).
         """
         context = self.retrieve(raw_query)
-
-        if not context.compression.kept:
-            logger.info("No relevant sources found for query=%r; skipping LLM call.", context.query)
-            return context, iter([NOT_FOUND_MESSAGE_UZ])
-
-        messages = build_messages(context.query, context.compression.kept)
-        return context, self.llm.stream(messages)
+        return context, self.stream_from_context(context)
