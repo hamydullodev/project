@@ -12,6 +12,10 @@ interface AskState {
   answer: string;
   answerFound: boolean;
   errorMessage: string | null;
+  /** `Date.now()` timings for the result card's response-time stat — null until each stage happens. */
+  askedAt: number | null;
+  firstTokenAt: number | null;
+  doneAt: number | null;
 }
 
 const INITIAL_STATE: AskState = {
@@ -21,6 +25,9 @@ const INITIAL_STATE: AskState = {
   answer: "",
   answerFound: true,
   errorMessage: null,
+  askedAt: null,
+  firstTokenAt: null,
+  doneAt: null,
 };
 
 /**
@@ -55,6 +62,9 @@ export function useAsk() {
       answer: "",
       answerFound: true,
       errorMessage: null,
+      askedAt: Date.now(),
+      firstTokenAt: null,
+      doneAt: null,
     });
 
     streamAsk(
@@ -64,10 +74,14 @@ export function useAsk() {
           setState((prev) => ({ ...prev, status: "streaming", sources }));
         },
         onToken: (text) => {
-          setState((prev) => ({ ...prev, answer: prev.answer + text }));
+          setState((prev) => ({
+            ...prev,
+            answer: prev.answer + text,
+            firstTokenAt: prev.firstTokenAt ?? Date.now(),
+          }));
         },
         onDone: (answerFound) => {
-          setState((prev) => ({ ...prev, status: "done", answerFound }));
+          setState((prev) => ({ ...prev, status: "done", answerFound, doneAt: Date.now() }));
         },
         onError: (message) => {
           setState((prev) => ({ ...prev, status: "error", errorMessage: message }));

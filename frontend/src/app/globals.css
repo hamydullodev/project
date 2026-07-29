@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -142,5 +143,110 @@
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
   }
+}
+
+/*
+ * Ambient hero background blobs — large, slow-drifting, blurred gradient
+ * shapes behind the home hero for depth (the "glassmorphism" ask). Purely
+ * decorative, so the drift animation is opt-out via `prefers-reduced-
+ * motion` here at the CSS level (belt-and-braces alongside the
+ * `useReducedMotion()` gating on any Framer Motion loops in components).
+ */
+@keyframes ambient-drift-a {
+  0%,
+  100% {
+    transform: translate(-8%, -6%) scale(1);
+  }
+  50% {
+    transform: translate(6%, 4%) scale(1.12);
+  }
+}
+@keyframes ambient-drift-b {
+  0%,
+  100% {
+    transform: translate(8%, 6%) scale(1.08);
+  }
+  50% {
+    transform: translate(-6%, -8%) scale(1);
+  }
+}
+.animate-ambient-a {
+  animation: ambient-drift-a 18s ease-in-out infinite;
+}
+.animate-ambient-b {
+  animation: ambient-drift-b 22s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-ambient-a,
+  .animate-ambient-b {
+    animation: none;
+  }
+}
+
+/*
+ * Button ripple — a plain CSS keyframe (no library) triggered by a JS
+ * positioner (`lib/ripple.ts`) that mounts a `.ripple-dot` span at the
+ * pointer's coordinates on click and removes it after the animation
+ * completes.
+ */
+@keyframes ripple-expand {
+  from {
+    transform: scale(0);
+    opacity: 0.45;
+  }
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+.ripple-dot {
+  position: absolute;
+  border-radius: 9999px;
+  background: currentColor;
+  pointer-events: none;
+  transform-origin: center;
+  animation: ripple-expand 600ms ease-out forwards;
+}
+
+/*
+ * Print styles for the result card's "PDF" action (`window.print()` —
+ * see result-card.tsx's docstring for why this beats a client-side PDF
+ * library here). Anything not explicitly part of the printable answer
+ * is hidden; the printable area itself is reset to plain black-on-white
+ * flow content regardless of the active theme.
+ */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    color: #000;
+    background: #fff;
+  }
+}
+
+/* react-markdown output styling — dark-aware via the typography plugin's own `dark:prose-invert`, kept tight (text-[15px]) to match the rest of the result card rather than the plugin's default prose sizing. */
+.markdown-answer {
+  --tw-prose-body: var(--foreground);
+  --tw-prose-headings: var(--foreground);
+  --tw-prose-bold: var(--foreground);
+  --tw-prose-links: var(--primary);
+  --tw-prose-bullets: var(--muted-foreground);
+  --tw-prose-hr: var(--border);
+  --tw-prose-quotes: var(--foreground);
+  --tw-prose-quote-borders: var(--border);
+  --tw-prose-code: var(--foreground);
+  --tw-prose-pre-bg: var(--muted);
+  --tw-prose-pre-code: var(--foreground);
+  --tw-prose-th-borders: var(--border);
+  --tw-prose-td-borders: var(--border);
 }

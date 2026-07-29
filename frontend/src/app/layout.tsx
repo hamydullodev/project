@@ -36,7 +36,7 @@ export default function RootLayout({
     // mismatch is expected, not a bug to warn about.
     <html lang="uz" suppressHydrationWarning className={`${inter.variable} antialiased`}>
       <body className="min-h-screen bg-background font-sans text-foreground">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <TooltipProvider>
             <Navbar />
             <main className="flex min-h-[calc(100vh-3.5rem)] flex-col">{children}</main>

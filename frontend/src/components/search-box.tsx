@@ -1,8 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { motion } from "framer-motion";
 import { ArrowRight, Loader2, Search } from "lucide-react";
 
+import { spawnRipple } from "@/lib/ripple";
 import { cn } from "@/lib/utils";
 
 interface SearchBoxProps {
@@ -94,12 +96,15 @@ export function SearchBox({ value, onValueChange, onSubmit, loading = false, cla
             {isMac ? "⌘" : "Ctrl"}K
           </kbd>
         ) : null}
-        <button
+        <motion.button
           type="submit"
           disabled={loading || !value.trim()}
           aria-label="Qidirish"
+          onPointerDown={spawnRipple}
+          whileHover={loading || !value.trim() ? undefined : { scale: 1.06 }}
+          whileTap={loading || !value.trim() ? undefined : { scale: 0.94 }}
           className={cn(
-            "flex size-9 shrink-0 items-center justify-center rounded-xl text-white transition-all",
+            "relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl text-white transition-all",
             "disabled:cursor-not-allowed disabled:opacity-40",
           )}
           style={{
@@ -111,7 +116,7 @@ export function SearchBox({ value, onValueChange, onSubmit, loading = false, cla
           ) : (
             <ArrowRight className="size-4" aria-hidden="true" />
           )}
-        </button>
+        </motion.button>
       </div>
     </form>
   );

@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { AboutDialog } from "@/components/about-dialog";
 import { Logo } from "@/components/logo";
+import { SavedPanel } from "@/components/saved-panel";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { GITHUB_URL, STREAMLIT_URL } from "@/lib/config";
@@ -79,6 +80,7 @@ export function Navbar() {
             <Settings className="size-4" />
           </Button>
 
+          <SavedPanel />
           <ThemeToggle />
           <AboutDialog />
         </nav>
