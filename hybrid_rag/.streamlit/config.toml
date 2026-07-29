@@ -1,0 +1,12 @@
+# Minimal theme customization only (primary accent color + font) —
+# deliberately NOT overriding the full color palette (background/text
+# colors), so Streamlit's own built-in light/dark theme switcher (in the
+# app's hamburger menu) keeps working correctly in both directions. See
+# app/ui/components.py's docstring for the same reasoning applied to
+# component design.
+[theme]
+primaryColor = "#0F5C3F"
+font = "sans serif"
+
+[server]
+headless = true
