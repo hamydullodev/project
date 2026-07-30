@@ -6,7 +6,7 @@ interface BrandMarkProps {
 }
 
 /**
- * The UzLaw AI mark: one integrated glyph, not two emoji side by side.
+ * The Qonun AI mark: one integrated glyph, not two emoji side by side.
  *
  * A rounded badge in the app's brand gradient (the same `--gradient-from`/
  * `--gradient-to` tokens every other gradient accent in this app uses, so
@@ -32,7 +32,7 @@ export function BrandMark({ className, glow = false }: BrandMarkProps) {
           }}
         />
       ) : null}
-      <svg viewBox="0 0 40 40" className="size-full" role="img" aria-label="UzLaw AI">
+      <svg viewBox="0 0 40 40" className="size-full" role="img" aria-label="Qonun AI">
         <defs>
           <linearGradient id="brandBadge" x1="4" y1="2" x2="36" y2="38" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="var(--gradient-from)" />

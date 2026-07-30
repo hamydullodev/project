@@ -104,7 +104,7 @@ export default function Home() {
                 <BrandMark className="size-16" glow />
               </motion.div>
               <motion.h1 variants={ITEM_VARIANTS} className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                UzLaw AI
+                Qonun AI
               </motion.h1>
               <motion.p variants={ITEM_VARIANTS} className="max-w-md text-sm text-muted-foreground sm:text-base">
                 Oʻzbekiston Respublikasi qonun hujjatlari asosida savollaringizga javob beruvchi
