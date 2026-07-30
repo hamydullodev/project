@@ -156,11 +156,11 @@ reference, and the Streamlit debug tool: [`docs/`](docs/).
 
 ## 🧬 Fine-tuning
 
-The LLM here runs as a base Ollama model — LoRA fine-tuning is a
-**separate component**, not yet wired into this pipeline:
-[`local-llm-finetune-unsloth`](../local-llm-finetune-unsloth) fine-tunes
-Llama 3.2 / Qwen 2.5 with **LoRA** via Unsloth, PEFT, and Hugging Face
-Transformers/PyTorch, ready to swap in as `LLM_MODEL` once merged.
+| | |
+|---|---|
+| **Status** | ![Not wired in](https://img.shields.io/badge/●-Not_wired_in-64748b?style=flat-square) — this pipeline runs a base Ollama model |
+| **LoRA component** | [`local-llm-finetune-unsloth`](../local-llm-finetune-unsloth) · Llama 3.2 / Qwen 2.5 · Unsloth · PEFT · Transformers |
+| **Next step** | Swap the trained adapter in as `LLM_MODEL` |
 
 <br/>
 
