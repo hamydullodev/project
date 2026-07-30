@@ -1,204 +1,121 @@
 <div align="center">
 
-<img src="docs/banner.svg" alt="UzLaw AI — AI-powered Legal Intelligence for Uzbekistan" width="100%" />
+# ⚖️ UzLaw AI
+
+Local, cited, hybrid-RAG legal assistant for Uzbekistan's legal codes.
 
 <br/>
 
-<a href="#quick-start"><img src="https://img.shields.io/badge/🚀_Quick_Start-6D5EF0?style=for-the-badge&logoColor=white" alt="Quick Start"/></a>
-<a href="docs/"><img src="https://img.shields.io/badge/📖_Documentation-1eb5e0?style=for-the-badge&logoColor=white" alt="Documentation"/></a>
-<a href="https://github.com/hamydullodev/project/tree/main/hybrid_rag"><img src="https://img.shields.io/badge/💻_Source_Code-22c55e?style=for-the-badge&logoColor=white" alt="Source Code"/></a>
-
-<br/><br/>
-
-<img src="https://img.shields.io/badge/🧠_AI_Powered-6D5EF0?style=flat-square" alt=""/>
-<img src="https://img.shields.io/badge/⚖️_Legal_AI-6D5EF0?style=flat-square" alt=""/>
-<img src="https://img.shields.io/badge/🇺🇿_Uzbekistan-1eb5e0?style=flat-square" alt=""/>
-<img src="https://img.shields.io/badge/🔍_Hybrid_RAG-1eb5e0?style=flat-square" alt=""/>
-<img src="https://img.shields.io/badge/⚡_Fast_Retrieval-22c55e?style=flat-square" alt=""/>
-<img src="https://img.shields.io/badge/📖_Citations-22c55e?style=flat-square" alt=""/>
-<img src="https://img.shields.io/badge/🧪_Tested-64748b?style=flat-square" alt=""/>
-<a href="LICENSE"><img src="https://img.shields.io/badge/📄_MIT-64748b?style=flat-square" alt="MIT License"/></a>
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=next.js&logoColor=white)
+![Ollama](https://img.shields.io/badge/Ollama-Local_LLM-black?style=for-the-badge)
+<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-64748b?style=for-the-badge" alt="MIT License"/></a>
 
 </div>
 
-<br/>
+---
 
-## 🎯 What it does
+## Features
 
-**UzLaw AI** answers legal questions in Uzbek, grounded in the actual
-text of Uzbekistan's legal codes — hybrid retrieval (FAISS + BM25) finds
-the right articles, a reranker verifies relevance, and a local LLM
-answers *only* from what was retrieved. Fully offline after setup, no
-cloud APIs, every answer cited and expandable back to source.
+⚖️ Legal Question Answering
+📄 Hybrid RAG
+🔍 Semantic Search
+🧠 Local LLM
+📚 Source Citation
+🚀 Fast Retrieval
 
-<br/>
+---
 
-## ✨ Features
+## Tech Stack
 
-- ⚖️ Legal question answering, in Uzbek
-- 📄 Hybrid RAG (dense + sparse retrieval)
-- 🔍 Semantic search over Uzbekistan's legal codes
-- 🧠 Local LLM — fully offline, no cloud API calls
-- 📚 Inline, expandable source citations
-- 🚀 Cross-encoder reranking for relevance
-- 🖥️ Streamlit tool for index management & retrieval debugging
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)
+![Ollama](https://img.shields.io/badge/Ollama-black?style=flat-square)
+![Llama 3.2](https://img.shields.io/badge/Llama_3.2-0467DF?style=flat-square)
+![FAISS](https://img.shields.io/badge/FAISS-4f8ef7?style=flat-square)
+![Sentence Transformers](https://img.shields.io/badge/Sentence_Transformers-FFD21E?style=flat-square)
+![BM25](https://img.shields.io/badge/BM25-4f8ef7?style=flat-square)
+![Hybrid RAG](https://img.shields.io/badge/Hybrid_RAG-7C5CFF?style=flat-square)
+![LoRA](https://img.shields.io/badge/LoRA_Fine--tuning-7C5CFF?style=flat-square)
+![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)
+![Unsloth](https://img.shields.io/badge/Unsloth-black?style=flat-square)
 
-<br/>
+---
 
-## 🧱 Tools used
-
-<div align="center">
-
-<img src="https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=next.js&logoColor=white" alt="Next.js"/>
-<img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"/>
-<img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS"/>
-<img src="https://img.shields.io/badge/Framer_Motion-black?style=flat-square&logo=framer&logoColor=white" alt="Framer Motion"/>
-<img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI"/>
-<img src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"/>
-<img src="https://img.shields.io/badge/FAISS-4f8ef7?style=flat-square" alt="FAISS"/>
-<img src="https://img.shields.io/badge/BM25-4f8ef7?style=flat-square" alt="BM25"/>
-<img src="https://img.shields.io/badge/Ollama-black?style=flat-square" alt="Ollama"/>
-<img src="https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite"/>
-
-</div>
-
-| Layer | Choice |
-|---|---|
-| **Frontend** | Next.js · TypeScript · Tailwind CSS · Framer Motion |
-| **Backend** | FastAPI, streaming answers over Server-Sent Events |
-| **Retrieval** | FAISS (dense) + BM25 (sparse), fused and reranked by a cross-encoder |
-| **LLM** | Local, via [Ollama](https://ollama.com) — no cloud API calls |
-| **Internal tool** | Streamlit (index management, retrieval debug, stats) |
-
-<br/>
-
-## 📁 Project structure
+## Project Structure
 
 ```
 hybrid_rag/
-├── app/               # Framework-agnostic RAG core
-│   ├── ingestion/     # Document parsing & chunking
-│   ├── retriever/     # FAISS (dense) + BM25 (sparse)
-│   ├── reranker/      # Cross-encoder relevance scoring
-│   ├── llm/            # Ollama client + prompting
-│   └── ui/             # Streamlit internal tool
-├── api/                # FastAPI backend (streams /api/ask over SSE)
-├── frontend/           # Next.js product UI
-├── docs/                # Architecture, retrieval, evaluation, deployment
-└── tests/               # Pipeline, retrieval-quality & API tests
+├── app/            # RAG core: ingestion, retriever, reranker, llm
+├── api/            # FastAPI backend (SSE streaming)
+├── frontend/       # Next.js product UI
+├── docs/           # Architecture & evaluation docs
+└── tests/          # Pipeline & retrieval-quality tests
 ```
 
-<br/>
+---
 
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
-flowchart LR
-    A([User question]) --> B{Hybrid retrieval}
-    B --> D1[("FAISS · dense")]
-    B --> D2[("BM25 · sparse")]
-    D1 --> E[Fuse + rerank]
-    D2 --> E
-    E --> F[["Local LLM · Ollama"]]
-    F --> G([Answer + citations])
+flowchart TD
+    A[User] --> B[Frontend]
+    B --> C[FastAPI]
+    C --> D[Hybrid Retriever]
+    D --> E[FAISS + BM25]
+    E --> F[Local LLM · LoRA Fine-tuned]
+    F --> G[Answer + Sources]
 
-    style A fill:#7c6ff0,color:#fff,stroke:none
-    style G fill:#22c55e,color:#fff,stroke:none
+    style A fill:#7C5CFF,color:#fff,stroke:none
     style F fill:#4f8ef7,color:#fff,stroke:none
+    style G fill:#22c55e,color:#fff,stroke:none
 ```
 
-Full breakdown (request sequence, module boundaries, API contract):
-[`docs/architecture.md`](docs/architecture.md).
+---
 
-<br/>
-
-## ⚙️ Qanday ishlaydi
-
-| Qadam | Nima boʻladi |
-|:---:|---|
-| 1️⃣ | Savol FAISS (maʼno boʻyicha) va BM25 (aniq atama boʻyicha) orqali qidiriladi |
-| 2️⃣ | Ikkala natija birlashtiriladi, cross-encoder qayta saralaydi |
-| 3️⃣ | Eng mos manbalar mahalliy LLM (Ollama)ga uzatiladi |
-| 4️⃣ | Javob manbalarga asoslanib, iqtibos bilan striming tarzida qaytariladi |
-
-<br/>
-
-## 🎬 Demo
+## Demo
 
 <div align="center">
-<img src="docs/demo.gif" alt="UzLaw AI demo — asking a question and getting a cited answer" width="100%" />
+<img src="docs/demo.gif" width="100%" alt="UzLaw AI demo"/>
 </div>
 
-<br/>
+---
 
-## 🚀 Quick start
+## How it Works
 
-```bash
-# Backend
-cd hybrid_rag && python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-python run_api.py                   # http://localhost:8000
+1. User asks
+2. Hybrid Retrieval
+3. Re-ranking
+4. Local LLM generates
+5. Sources returned
 
-# Frontend (separate terminal)
-cd frontend && npm install && cp .env.local.example .env.local
-npm run dev                         # http://localhost:3000
+---
 
-# Local LLM (separate terminal)
-ollama pull llama3.2:3b && ollama serve
-```
+## Fine-Tuning
 
-First launch needs an index build — see
-[`docs/deployment.md`](docs/deployment.md). Full setup, config
-reference, and the Streamlit debug tool: [`docs/`](docs/).
+Fine-tuned using **LoRA**.
 
-<br/>
+- **Base Model:** Llama 3.2 / Qwen 2.5
+- **Dataset:** Alpaca-format instruction data
+- **Unsloth** for efficient training
+- **PEFT** + **LoRA** adapters
+- **Hugging Face Transformers** + **PyTorch**
 
-## 🧬 Fine-tuning
+---
 
-| | |
+## Results
+
+| Metric | Value |
 |---|---|
-| **Status** | ![Not wired in](https://img.shields.io/badge/●-Not_wired_in-64748b?style=flat-square) — this pipeline runs a base Ollama model |
-| **LoRA component** | [`local-llm-finetune-unsloth`](../local-llm-finetune-unsloth) · Llama 3.2 / Qwen 2.5 · Unsloth · PEFT · Transformers |
-| **Next step** | Swap the trained adapter in as `LLM_MODEL` |
+| Retrieval Accuracy (nDCG@5) | 0.77 |
+| Latency | Local, hardware-dependent |
+| Context Length | 128K (Llama 3.2) |
 
-<br/>
+---
 
-## 📊 Results
+## License
 
-Retrieval quality, measured against an 8-query hand-verified golden set
-([full breakdown](docs/evaluation.md)):
+MIT
 
-| Metric | Score |
-|---|---|
-| Recall@5 | 1.00 |
-| nDCG@5 | 0.77 |
-| MRR | 0.70 |
-
-<br/>
-
-## 📚 Docs
-
-[Architecture](docs/architecture.md) ·
-[Hybrid Retrieval](docs/hybrid-retrieval.md) ·
-[Evaluation](docs/evaluation.md) ·
-[Configuration](docs/configuration.md) ·
-[Deployment](docs/deployment.md)
-
-<br/>
-
-## 📄 License
-
-MIT — see [`LICENSE`](LICENSE).
-
-> [!IMPORTANT]
-> The included legal texts are Uzbekistan's public legal codes. Verify
-> against an official source ([lex.uz](https://lex.uz)) before relying
-> on any answer for a real legal decision — this is an educational
-> retrieval system, not legal advice.
-
-<br/>
-
-<div align="center">
-<sub>⚖️ UzLaw AI · AI-powered Legal Intelligence for Uzbekistan</sub>
-</div>
