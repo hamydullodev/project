@@ -33,6 +33,18 @@ cloud APIs, every answer cited and expandable back to source.
 
 <br/>
 
+## ✨ Features
+
+- ⚖️ Legal question answering, in Uzbek
+- 📄 Hybrid RAG (dense + sparse retrieval)
+- 🔍 Semantic search over Uzbekistan's legal codes
+- 🧠 Local LLM — fully offline, no cloud API calls
+- 📚 Inline, expandable source citations
+- 🚀 Cross-encoder reranking for relevance
+- 🖥️ Streamlit tool for index management & retrieval debugging
+
+<br/>
+
 ## 🧱 Tools used
 
 <div align="center">
@@ -57,6 +69,24 @@ cloud APIs, every answer cited and expandable back to source.
 | **Retrieval** | FAISS (dense) + BM25 (sparse), fused and reranked by a cross-encoder |
 | **LLM** | Local, via [Ollama](https://ollama.com) — no cloud API calls |
 | **Internal tool** | Streamlit (index management, retrieval debug, stats) |
+
+<br/>
+
+## 📁 Project structure
+
+```
+hybrid_rag/
+├── app/               # Framework-agnostic RAG core
+│   ├── ingestion/     # Document parsing & chunking
+│   ├── retriever/     # FAISS (dense) + BM25 (sparse)
+│   ├── reranker/      # Cross-encoder relevance scoring
+│   ├── llm/            # Ollama client + prompting
+│   └── ui/             # Streamlit internal tool
+├── api/                # FastAPI backend (streams /api/ask over SSE)
+├── frontend/           # Next.js product UI
+├── docs/                # Architecture, retrieval, evaluation, deployment
+└── tests/               # Pipeline, retrieval-quality & API tests
+```
 
 <br/>
 
@@ -121,6 +151,29 @@ ollama pull llama3.2:3b && ollama serve
 First launch needs an index build — see
 [`docs/deployment.md`](docs/deployment.md). Full setup, config
 reference, and the Streamlit debug tool: [`docs/`](docs/).
+
+<br/>
+
+## 🧬 Fine-tuning
+
+The LLM here runs as a base Ollama model — LoRA fine-tuning is a
+**separate component**, not yet wired into this pipeline:
+[`local-llm-finetune-unsloth`](../local-llm-finetune-unsloth) fine-tunes
+Llama 3.2 / Qwen 2.5 with **LoRA** via Unsloth, PEFT, and Hugging Face
+Transformers/PyTorch, ready to swap in as `LLM_MODEL` once merged.
+
+<br/>
+
+## 📊 Results
+
+Retrieval quality, measured against an 8-query hand-verified golden set
+([full breakdown](docs/evaluation.md)):
+
+| Metric | Score |
+|---|---|
+| Recall@5 | 1.00 |
+| nDCG@5 | 0.77 |
+| MRR | 0.70 |
 
 <br/>
 
