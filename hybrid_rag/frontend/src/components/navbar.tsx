@@ -4,15 +4,14 @@ import Link from "next/link";
 import { AboutDialog } from "@/components/about-dialog";
 import { Logo } from "@/components/logo";
 import { SavedPanel } from "@/components/saved-panel";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { GITHUB_URL, STREAMLIT_URL } from "@/lib/config";
 
 /**
  * The one persistent chrome element every page sits under (Home, and
  * whatever pages later milestones add) — deliberately minimal, per the
- * design brief: logo, project name, GitHub, settings, theme toggle,
- * about, nothing more.
+ * design brief: logo, project name, GitHub, settings, about, nothing
+ * more. Dark mode only, so there's no theme toggle to include.
  *
  * WHY "SETTINGS" LINKS OUT TO STREAMLIT INSTEAD OF A LOCAL PAGE
  * -------------------------------------------------------------------
@@ -81,7 +80,6 @@ export function Navbar() {
           </Button>
 
           <SavedPanel />
-          <ThemeToggle />
           <AboutDialog />
         </nav>
       </div>

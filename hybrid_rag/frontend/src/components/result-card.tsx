@@ -143,7 +143,7 @@ export function ResultCard({
     url.searchParams.set("q", query);
     if (navigator.share) {
       try {
-        await navigator.share({ title: "Qonun AI", text: query, url: url.toString() });
+        await navigator.share({ title: "UzLaw AI", text: query, url: url.toString() });
       } catch {
         // user dismissed the native share sheet — nothing to do
       }
@@ -171,7 +171,7 @@ export function ResultCard({
     >
       <div className="mb-3 flex items-center gap-2">
         <BrandMark className="size-5" />
-        <span className="text-xs font-medium text-muted-foreground">Qonun AI</span>
+        <span className="text-xs font-medium text-muted-foreground">UzLaw AI</span>
       </div>
 
       <AnimatePresence mode="wait" initial={false}>
