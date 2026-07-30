@@ -1,0 +1,12 @@
+[
+  {"instruction": "Write a limerick about a programmer who loves coffee.", "input": ""},
+  {"instruction": "Explain what a REST API is in simple terms.", "input": ""},
+  {"instruction": "Correct the spelling errors in the following sentence.", "input": "The recieve of the pakage was delayed becuase of bad wether."},
+  {"instruction": "Classify the sentiment of the following review as positive, negative, or neutral.", "input": "The staff were friendly but the room was smaller than the photos suggested."},
+  {"instruction": "Write a short motivational quote about persistence.", "input": ""},
+  {"instruction": "Summarize the plot of Romeo and Juliet in two sentences.", "input": ""},
+  {"instruction": "Explain what gradient checkpointing does during model training.", "input": ""},
+  {"instruction": "Write a Python function that checks if a string is a palindrome.", "input": ""},
+  {"instruction": "Rewrite the following sentence to be more concise.", "input": "Due to the fact that it was raining, we decided to cancel the event that had been planned."},
+  {"instruction": "Answer the question based on the given context. If the answer isn't in the context, say you don't know.", "input": "Context: The Great Wall of China is over 13,000 miles long. Question: Who built the Great Wall of China?"}
+]

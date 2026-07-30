@@ -1,0 +1,28 @@
+# Core fine-tuning stack (requires an NVIDIA GPU with CUDA 11.8+ / 12.1+)
+unsloth @ git+https://github.com/unslothai/unsloth.git
+torch>=2.3.0
+transformers>=4.44.0
+peft>=0.12.0
+bitsandbytes>=0.43.1
+accelerate>=0.33.0
+trl>=0.9.6
+datasets>=2.20.0
+xformers ; platform_system != "Darwin"
+
+# Evaluation
+evaluate>=0.4.2
+sacrebleu>=2.4.0
+rouge-score>=0.1.2
+
+# App / interface
+streamlit>=1.37.0
+plotly>=5.22.0
+pandas>=2.2.0
+
+# Utilities
+pyyaml>=6.0.1
+tqdm>=4.66.0
+sentencepiece>=0.2.0
+
+# Testing
+pytest>=8.0.0
