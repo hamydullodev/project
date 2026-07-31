@@ -377,7 +377,7 @@ if st.session_state.nav == "💬 Chat":
                     st.rerun()
 
         for i, msg in enumerate(session["messages"]):
-            with st.chat_message(msg["role"]):
+            with st.chat_message(msg["role"], avatar="🧑" if msg["role"] == "user" else "🦥"):
                 st.markdown(msg["content"])
                 if msg["role"] == "assistant" and "latency" in msg:
                     st.caption(f"⏱ {msg['latency']:.2f}s · {active_label}")
@@ -417,10 +417,10 @@ if st.session_state.nav == "💬 Chat":
                 session["title"] = prompt[:40] + ("…" if len(prompt) > 40 else "")
 
             session["messages"].append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
+            with st.chat_message("user", avatar="🧑"):
                 st.markdown(prompt)
 
-            with st.chat_message("assistant"):
+            with st.chat_message("assistant", avatar="🦥"):
                 stage_placeholder = st.empty()
                 for stage in THINKING_STAGES:
                     stage_placeholder.caption(stage)
