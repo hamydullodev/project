@@ -68,6 +68,14 @@ flowchart LR
 
 > GPU'siz muhitda (masalan shu screenshot) ilova **Demo Mode**da ishlaydi — interfeys va training statistikasi to'liq ishlaydi, faqat jonli generatsiya o'rniga placeholder javob ko'rsatiladi.
 
+<div align="center">
+
+| Chat | Solishtirish | Statistika |
+|---|---|---|
+| ![Chat](docs/screenshots/chat.jpg) | ![Solishtirish](docs/screenshots/compare.jpg) | ![Statistika](docs/screenshots/stats.jpg) |
+
+</div>
+
 ---
 
 ## 🧱 Texnologiyalar
