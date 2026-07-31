@@ -281,7 +281,14 @@ with st.sidebar:
             st.rerun()
 
         with st.expander("🕘 Suhbatlar tarixi", expanded=False):
-            for s in st.session_state.sessions:
+            search_query = st.text_input("🔍 Qidirish", key="chat_search", placeholder="Suhbat nomi bo'yicha...", label_visibility="collapsed")
+            visible_sessions = [
+                s for s in st.session_state.sessions
+                if not search_query or search_query.lower() in s["title"].lower()
+            ]
+            if not visible_sessions:
+                st.caption("Hech narsa topilmadi.")
+            for s in visible_sessions:
                 label = "🟢 " + s["title"] if s["id"] == st.session_state.active_session_id else s["title"]
                 if st.button(label, key=f"hist_{s['id']}", use_container_width=True):
                     st.session_state.active_session_id = s["id"]
@@ -374,7 +381,7 @@ if st.session_state.nav == "💬 Chat":
                 st.markdown(msg["content"])
                 if msg["role"] == "assistant" and "latency" in msg:
                     st.caption(f"⏱ {msg['latency']:.2f}s · {active_label}")
-                    b1, b2, b3, _ = st.columns([1, 1, 1, 6])
+                    b1, b2, b3, b4, b5, _ = st.columns([1, 1, 1, 1, 1, 5])
                     if b1.button("📋", key=f"copy_{session['id']}_{i}", help="Nusxalash"):
                         st.session_state[f"show_code_{session['id']}_{i}"] = True
                     if b2.button("⭐", key=f"bookmark_{session['id']}_{i}", help="Saqlash"):
@@ -389,6 +396,15 @@ if st.session_state.nav == "💬 Chat":
                                 max_new_tokens, temperature, top_p,
                             )
                         session["messages"][i] = {"role": "assistant", "content": new_response, "latency": new_latency}
+                        st.rerun()
+                    feedback = msg.get("feedback")
+                    like_label = "👍" if feedback != "like" else "✅"
+                    dislike_label = "👎" if feedback != "dislike" else "❌"
+                    if b4.button(like_label, key=f"like_{session['id']}_{i}", help="Yoqdi"):
+                        msg["feedback"] = None if feedback == "like" else "like"
+                        st.rerun()
+                    if b5.button(dislike_label, key=f"dislike_{session['id']}_{i}", help="Yoqmadi"):
+                        msg["feedback"] = None if feedback == "dislike" else "dislike"
                         st.rerun()
                     if st.session_state.get(f"show_code_{session['id']}_{i}"):
                         st.code(msg["content"], language=None)

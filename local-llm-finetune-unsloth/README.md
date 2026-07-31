@@ -12,6 +12,8 @@
 ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)
 ![Unsloth](https://img.shields.io/badge/Unsloth-black?style=for-the-badge)
 ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-64748b?style=for-the-badge)
+![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-2563EB?style=for-the-badge)
 
 <br>
 
@@ -139,7 +141,55 @@ local-llm-finetune-unsloth/
 
 ---
 
+## 💬 Namuna savol-javob
+
+<details>
+<summary><b>LoRA nima va u qanday ishlaydi?</b></summary>
+<br>
+
+LoRA — baza model og'irliklarini muzlatib, har bir qatlamga kichik, arzon o'qitiladigan past-rangli (`A`, `B`) adapter matritsalarini qo'shadigan fine-tuning usuli: `W' = W + BA`. O'qitiladigan parametrlar sonini 99%+ ga kamaytiradi, sifat esa deyarli to'liq fine-tuning darajasida qoladi.
+</details>
+
+<details>
+<summary><b>QLoRA bilan LoRA o'rtasidagi farq nima?</b></summary>
+<br>
+
+QLoRA — baza model og'irliklarini 4-bit NF4'ga kvantlab, ustiga yuqori aniqlikdagi LoRA adapterlarini o'qitadi. Natijada 3B model ~6–8GB VRAM'da sig'adi (LoRA'da ~10–12GB kerak), sifatda atigi 1–2% yo'qotish evaziga.
+</details>
+
+<details>
+<summary><b>Fine-tuning uchun nechta namuna kerak?</b></summary>
+<br>
+
+Oddiy uslub moslashuvi uchun 50–200 namuna yetarli; domenga xos bilim uchun 500–2000+ tavsiya etiladi. Sifat miqdordan ustun.
+</details>
+
+---
+
+## 🗺️ Roadmap
+
+- [x] Dataset konvert/tozalash/bo'lish pipeline
+- [x] LoRA/QLoRA training (Unsloth)
+- [x] Baza vs fine-tuned baholash
+- [x] Chat interfeys, ko'p sessiyali tarix
+- [x] Colab notebook, pytest suite
+- [ ] Haqiqiy CUDA muhitda birinchi training runi va real natijalar
+- [ ] Ko'proq baza model qo'llab-quvvatlash (Mistral, Gemma)
+- [ ] Streaming token-by-token real generatsiya (GPU muhitda)
+
+---
+
+## 🤝 Hissa qo'shish
+
+Pull request'lar xush kelibsiz — qarang: [CONTRIBUTING.md](CONTRIBUTING.md). Xatti-harakat qoidalari: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Xavfsizlik zaifligi topsangiz: [SECURITY.md](SECURITY.md). O'zgarishlar tarixi: [CHANGELOG.md](CHANGELOG.md).
+
+## 📧 Aloqa
+
+abduroshyd@gmail.com · [GitHub](https://github.com/hamydullodev/project/tree/main/local-llm-finetune-unsloth)
+
+---
+
 ## 📄 Litsenziya
 
-MIT
+MIT — qarang: [LICENSE](LICENSE).
 
