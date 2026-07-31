@@ -9,6 +9,7 @@ UI stays fully explorable on a laptop even though Unsloth itself requires CUDA.
 import json
 import sys
 import time
+import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -22,12 +23,12 @@ sys.path.insert(0, str(PROJECT_ROOT))
 st.set_page_config(page_title="Fine-Tuning Studio", page_icon="🦥", layout="wide")
 
 PALETTE = {
-    "series_1": "#7C5CFF",   # base model
-    "series_2": "#4f8ef7",   # fine-tuned model
-    "grid": "rgba(255,255,255,0.08)",
-    "axis": "rgba(255,255,255,0.18)",
-    "muted": "#9a99ac",
-    "text": "#f2f2f7",
+    "series_1": "#2563EB",   # base model
+    "series_2": "#0EA5E9",   # fine-tuned model
+    "grid": "rgba(15,23,42,0.08)",
+    "axis": "rgba(15,23,42,0.18)",
+    "muted": "#64748b",
+    "text": "#0f172a",
 }
 
 NAV_PAGES = ["💬 Chat", "⚖️ Solishtirish", "📤 Dataset", "📊 Statistika"]
@@ -38,6 +39,8 @@ SUGGESTIONS = [
     "Fine-tuning uchun nechta namuna kerak?",
     "Bu loyihada qaysi baza modellar qo'llab-quvvatlanadi?",
 ]
+
+THINKING_STAGES = ["🧩 Kontekst tayyorlanmoqda...", "🧠 Javob generatsiya qilinmoqda..."]
 
 # Canned, genuinely-informative answers for Demo Mode — a real answer body
 # instead of a meta "no GPU" placeholder, so the demo actually reads like the
@@ -103,48 +106,68 @@ st.markdown(
 
     html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 
-    .stApp { background: radial-gradient(ellipse at top, #15112b 0%, #0b0b12 55%); }
+    .stApp { background: #ffffff; }
 
     section[data-testid="stSidebar"] {
-        background: #101018;
-        border-right: 1px solid rgba(255,255,255,0.06);
+        background: #f8fafc;
+        border-right: 1px solid rgba(15,23,42,0.06);
     }
 
     .metric-card {
-        border: 1px solid rgba(255,255,255,0.08);
+        border: 1px solid rgba(15,23,42,0.08);
         border-radius: 14px;
         padding: 1rem 1.25rem;
-        background: rgba(124,92,255,0.08);
+        background: #f4f6fb;
+        box-shadow: 0 1px 2px rgba(15,23,42,0.04);
     }
+    .info-card {
+        border: 1px solid rgba(15,23,42,0.08);
+        border-radius: 14px;
+        padding: 0.9rem 1.1rem;
+        background: #ffffff;
+        box-shadow: 0 2px 10px rgba(15,23,42,0.05);
+        margin-bottom: 0.75rem;
+    }
+    .info-card h5 { margin: 0 0 0.4rem 0; font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
     .demo-banner {
-        background: rgba(124,92,255,0.10);
-        border: 1px solid rgba(124,92,255,0.35);
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
         border-radius: 12px;
         padding: 0.6rem 1rem;
         margin-bottom: 1rem;
         font-size: 0.85rem;
-        color: #d7d2ff;
+        color: #1e40af;
     }
     .greeting-title {
         font-size: 2.4rem;
         font-weight: 700;
-        background: linear-gradient(135deg, #ffffff, #b9adff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #0f172a;
         margin-bottom: 0.2rem;
     }
-    .greeting-sub { color: #9a99ac; font-size: 1rem; margin-bottom: 1.5rem; }
+    .greeting-sub { color: #64748b; font-size: 1rem; margin-bottom: 1.5rem; }
 
     div[data-testid="stChatMessage"] {
         border-radius: 16px;
-        border: 1px solid rgba(255,255,255,0.06);
+        border: 1px solid rgba(15,23,42,0.06);
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04);
         padding: 0.25rem 0.5rem;
     }
 
     button[kind="secondary"] {
         border-radius: 999px !important;
-        border: 1px solid rgba(255,255,255,0.12) !important;
+        border: 1px solid rgba(15,23,42,0.12) !important;
     }
+
+    .history-item {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.6rem;
+        border-radius: 8px;
+        color: #334155;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .history-item:hover { background: #eef2ff; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -177,6 +200,13 @@ def list_adapters() -> list[str]:
     return list_available_adapters()
 
 
+def list_uploaded_datasets() -> list[str]:
+    raw_dir = PROJECT_ROOT / "data" / "raw"
+    if not raw_dir.exists():
+        return []
+    return sorted(p.name for p in raw_dir.glob("*.jsonl"))
+
+
 def demo_generate(instruction: str, input_: str) -> tuple[str, float]:
     lowered = instruction.lower()
     answer = DEMO_FALLBACK
@@ -185,7 +215,7 @@ def demo_generate(instruction: str, input_: str) -> tuple[str, float]:
         if key in lowered:
             answer = DEMO_ANSWERS[key]
             break
-    time.sleep(0.4)
+    time.sleep(0.2)
     return answer, 0.4
 
 
@@ -205,12 +235,37 @@ def run_generation(instruction: str, input_: str, use_adapter: str | None, model
                      max_new_tokens=max_new_tokens, temperature=temperature, top_p=top_p)
 
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+def new_session() -> dict:
+    return {"id": str(uuid.uuid4()), "title": "Yangi suhbat", "messages": []}
+
+
+def stream_words(text: str):
+    for word in text.split(" "):
+        yield word + " "
+        time.sleep(0.012)
+
+
+# ---------------------------------------------------------------- State ----
+if "sessions" not in st.session_state:
+    st.session_state.sessions = [new_session()]
+if "active_session_id" not in st.session_state:
+    st.session_state.active_session_id = st.session_state.sessions[0]["id"]
 if "pending_prompt" not in st.session_state:
     st.session_state.pending_prompt = None
 if "nav" not in st.session_state:
     st.session_state.nav = NAV_PAGES[0]
+if "bookmarks" not in st.session_state:
+    st.session_state.bookmarks = []
+if "show_info_panel" not in st.session_state:
+    st.session_state.show_info_panel = True
+
+
+def active_session() -> dict:
+    for s in st.session_state.sessions:
+        if s["id"] == st.session_state.active_session_id:
+            return s
+    return st.session_state.sessions[0]
+
 
 with st.sidebar:
     st.markdown("### 🦥 Fine-Tuning Studio")
@@ -220,8 +275,39 @@ with st.sidebar:
 
     if st.session_state.nav == "💬 Chat":
         if st.button("🆕 Yangi suhbat", use_container_width=True):
-            st.session_state.messages = []
+            session = new_session()
+            st.session_state.sessions.insert(0, session)
+            st.session_state.active_session_id = session["id"]
             st.rerun()
+
+        with st.expander("🕘 Suhbatlar tarixi", expanded=False):
+            for s in st.session_state.sessions:
+                label = "🟢 " + s["title"] if s["id"] == st.session_state.active_session_id else s["title"]
+                if st.button(label, key=f"hist_{s['id']}", use_container_width=True):
+                    st.session_state.active_session_id = s["id"]
+                    st.rerun()
+
+        with st.expander("⭐ Saqlangan javoblar", expanded=False):
+            if not st.session_state.bookmarks:
+                st.caption("Hali hech narsa saqlanmagan.")
+            for i, b in enumerate(st.session_state.bookmarks):
+                st.caption(f"**{b['prompt'][:40]}**")
+                st.markdown(b["content"][:120] + ("…" if len(b["content"]) > 120 else ""))
+                st.divider()
+
+        with st.expander("📤 Yuklangan datasetlar", expanded=False):
+            uploaded_names = list_uploaded_datasets()
+            if not uploaded_names:
+                st.caption("data/raw/ ostida hali fayl yo'q.")
+            for name in uploaded_names:
+                st.caption(f"📄 {name}")
+
+        with st.expander("🗂️ Adapterlar (Knowledge Base)", expanded=False):
+            known_adapters = list_adapters()
+            if not known_adapters:
+                st.caption("Hali o'qitilgan adapter yo'q.")
+            for name in known_adapters:
+                st.caption(f"🧠 {name}")
 
     st.divider()
 
@@ -257,44 +343,114 @@ if not cuda_available():
 # ---------------------------------------------------------------- Chat ----
 if st.session_state.nav == "💬 Chat":
     active_label = f"adapter: {selected_adapter}" if selected_adapter else f"base model: {model_key}"
+    session = active_session()
 
-    if not st.session_state.messages:
-        st.markdown(f'<div class="greeting-title">{greeting()} 👋</div>', unsafe_allow_html=True)
-        st.markdown(
-            '<div class="greeting-sub">Fine-tuning, LoRA/QLoRA yoki bu loyiha haqida '
-            "istalgan narsani so'rang.</div>",
-            unsafe_allow_html=True,
-        )
-        cols = st.columns(2)
-        for i, suggestion in enumerate(SUGGESTIONS):
-            if cols[i % 2].button(suggestion, key=f"suggestion_{i}", use_container_width=True):
-                st.session_state.pending_prompt = suggestion
-                st.rerun()
+    st.session_state.show_info_panel = st.toggle(
+        "ℹ️ Ma'lumot panelini ko'rsatish", value=st.session_state.show_info_panel,
+    )
 
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
-            if msg["role"] == "assistant" and "latency" in msg:
-                st.caption(f"⏱ {msg['latency']:.2f}s · {active_label}")
+    if st.session_state.show_info_panel:
+        col_main, col_info = st.columns([3, 1])
+    else:
+        col_main = st.container()
+        col_info = None
 
-    prompt = st.chat_input("Xabar yozing...") or st.session_state.pending_prompt
-    st.session_state.pending_prompt = None
+    with col_main:
+        if not session["messages"]:
+            st.markdown(f'<div class="greeting-title">{greeting()} 👋</div>', unsafe_allow_html=True)
+            st.markdown(
+                '<div class="greeting-sub">Fine-tuning, LoRA/QLoRA yoki bu loyiha haqida '
+                "istalgan narsani so'rang.</div>",
+                unsafe_allow_html=True,
+            )
+            cols = st.columns(2)
+            for i, suggestion in enumerate(SUGGESTIONS):
+                if cols[i % 2].button(suggestion, key=f"suggestion_{i}", use_container_width=True):
+                    st.session_state.pending_prompt = suggestion
+                    st.rerun()
 
-    if prompt:
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+        for i, msg in enumerate(session["messages"]):
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])
+                if msg["role"] == "assistant" and "latency" in msg:
+                    st.caption(f"⏱ {msg['latency']:.2f}s · {active_label}")
+                    b1, b2, b3, _ = st.columns([1, 1, 1, 6])
+                    if b1.button("📋", key=f"copy_{session['id']}_{i}", help="Nusxalash"):
+                        st.session_state[f"show_code_{session['id']}_{i}"] = True
+                    if b2.button("⭐", key=f"bookmark_{session['id']}_{i}", help="Saqlash"):
+                        prev_prompt = session["messages"][i - 1]["content"] if i > 0 else ""
+                        st.session_state.bookmarks.append({"prompt": prev_prompt, "content": msg["content"]})
+                        st.toast("Javob saqlandi")
+                    if b3.button("🔄", key=f"regen_{session['id']}_{i}", help="Qayta generatsiya"):
+                        prev_prompt = session["messages"][i - 1]["content"] if i > 0 else ""
+                        with st.spinner("Qayta generatsiya qilinmoqda..."):
+                            new_response, new_latency = run_generation(
+                                prev_prompt, "", selected_adapter, model_key, load_in_4bit,
+                                max_new_tokens, temperature, top_p,
+                            )
+                        session["messages"][i] = {"role": "assistant", "content": new_response, "latency": new_latency}
+                        st.rerun()
+                    if st.session_state.get(f"show_code_{session['id']}_{i}"):
+                        st.code(msg["content"], language=None)
 
-        with st.chat_message("assistant"):
-            with st.spinner("Javob tayyorlanmoqda..."):
+        prompt = st.chat_input("Xabar yozing...") or st.session_state.pending_prompt
+        st.session_state.pending_prompt = None
+
+        if prompt:
+            if session["title"] == "Yangi suhbat":
+                session["title"] = prompt[:40] + ("…" if len(prompt) > 40 else "")
+
+            session["messages"].append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+
+            with st.chat_message("assistant"):
+                stage_placeholder = st.empty()
+                for stage in THINKING_STAGES:
+                    stage_placeholder.caption(stage)
+                    time.sleep(0.15)
                 response, latency = run_generation(
                     prompt, "", selected_adapter, model_key, load_in_4bit,
                     max_new_tokens, temperature, top_p,
                 )
-            st.markdown(response)
-            st.caption(f"⏱ {latency:.2f}s · {active_label}")
+                stage_placeholder.empty()
+                st.write_stream(stream_words(response))
+                st.caption(f"⏱ {latency:.2f}s · {active_label}")
 
-        st.session_state.messages.append({"role": "assistant", "content": response, "latency": latency})
+            session["messages"].append({"role": "assistant", "content": response, "latency": latency})
+            st.rerun()
+
+    if col_info is not None:
+        with col_info:
+            st.markdown(
+                f'<div class="info-card"><h5>Faol konfiguratsiya</h5>'
+                f'<b>Model:</b> {model_key}<br/>'
+                f'<b>Adapter:</b> {selected_adapter or "—"}<br/>'
+                f'<b>4-bit:</b> {"Ha" if load_in_4bit else "Yo\'q"}<br/>'
+                f'<b>Temperature:</b> {temperature}<br/>'
+                f'<b>Top-p:</b> {top_p}<br/>'
+                f'<b>Max tokens:</b> {max_new_tokens}</div>',
+                unsafe_allow_html=True,
+            )
+
+            assistant_msgs = [m for m in session["messages"] if m["role"] == "assistant"]
+            if assistant_msgs:
+                last = assistant_msgs[-1]
+                words = len(last["content"].split())
+                st.markdown(
+                    f'<div class="info-card"><h5>Oxirgi javob</h5>'
+                    f'<b>Latency:</b> {last["latency"]:.2f}s<br/>'
+                    f'<b>Uzunlik:</b> ~{words} so\'z<br/>'
+                    f'<b>Rejim:</b> {"Demo" if not cuda_available() else "Live"}</div>',
+                    unsafe_allow_html=True,
+                )
+
+            if session["messages"]:
+                st.markdown('<div class="info-card"><h5>Suhbat vaqt jadvali</h5>', unsafe_allow_html=True)
+                for m in session["messages"][-6:]:
+                    role_icon = "🧑" if m["role"] == "user" else "🦥"
+                    st.caption(f"{role_icon} {m['content'][:36]}{'…' if len(m['content']) > 36 else ''}")
+                st.markdown('</div>', unsafe_allow_html=True)
 
 # ------------------------------------------------------------- Compare ----
 elif st.session_state.nav == "⚖️ Solishtirish":
