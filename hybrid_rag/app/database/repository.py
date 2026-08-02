@@ -99,22 +99,35 @@ BEST PRACTICES APPLIED
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator, Optional
+
+from pydantic import BaseModel
 
 from app.config import settings
 from app.database.models import ChunkRecord, DocumentRecord, utc_now_iso
-from app.database.schema import ALL_STATEMENTS
+from app.database.schema import INDEXES, MIGRATIONS, TABLES
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 
+class CollectionSummary(BaseModel):
+    """One row of the "Browse Laws" collection listing: `GET /api/collections`."""
+
+    collection_id: str
+    category: str | None
+    title: str | None
+    num_documents: int
+    num_chunks: int
+    source_url: str | None = None
+
+
 class MetadataRepository:
     """CRUD + query access to the `documents` and `chunks` tables."""
 
-    def __init__(self, db_path: Optional[Path] = None) -> None:
+    def __init__(self, db_path: Path | None = None) -> None:
         self.db_path = db_path or settings.sqlite_path_resolved
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.init_schema()
@@ -133,16 +146,30 @@ class MetadataRepository:
             conn.close()
 
     def init_schema(self) -> None:
-        """Create tables/indexes if they don't already exist. Idempotent."""
+        """Create tables if they don't already exist, apply column
+        migrations for tables that predate those columns, THEN create
+        indexes — in that order, because an index on a column that a
+        pre-existing table doesn't have yet would fail (`CREATE TABLE IF
+        NOT EXISTS` only helps brand-new databases; migrations must run
+        before any index referencing a migrated column). Idempotent
+        either way.
+        """
         with self._connect() as conn:
-            for statement in ALL_STATEMENTS:
+            for statement in TABLES:
+                conn.execute(statement)
+            for table, column, add_column_fragment in MIGRATIONS:
+                existing_columns = {row["name"] for row in conn.execute(f"PRAGMA table_info({table});")}
+                if column not in existing_columns:
+                    conn.execute(f"ALTER TABLE {table} ADD COLUMN {add_column_fragment};")
+                    logger.info("Migrated schema: added %s.%s", table, column)
+            for statement in INDEXES:
                 conn.execute(statement)
             conn.commit()
         logger.debug("Schema ensured at %s", self.db_path)
 
     # -- documents --------------------------------------------------------------
 
-    def get_document_by_hash(self, file_hash: str) -> Optional[DocumentRecord]:
+    def get_document_by_hash(self, file_hash: str) -> DocumentRecord | None:
         """Look up a document by content hash — the dedup entry point.
 
         The ingestion pipeline calls this before parsing/chunking a file:
@@ -150,19 +177,15 @@ class MetadataRepository:
         skipped entirely (see Milestone 10).
         """
         with self._connect() as conn:
-            row = conn.execute(
-                "SELECT * FROM documents WHERE file_hash = ?;", (file_hash,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM documents WHERE file_hash = ?;", (file_hash,)).fetchone()
         return DocumentRecord.from_row(row) if row else None
 
-    def get_document(self, document_id: str) -> Optional[DocumentRecord]:
+    def get_document(self, document_id: str) -> DocumentRecord | None:
         with self._connect() as conn:
-            row = conn.execute(
-                "SELECT * FROM documents WHERE id = ?;", (document_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM documents WHERE id = ?;", (document_id,)).fetchone()
         return DocumentRecord.from_row(row) if row else None
 
-    def get_document_by_path(self, file_path: str) -> Optional[DocumentRecord]:
+    def get_document_by_path(self, file_path: str) -> DocumentRecord | None:
         """Look up a document by source file path — the incremental-
         indexing entry point (Milestone 10): "is this file already
         tracked, and if so, under which document_id?" lets a changed
@@ -171,17 +194,13 @@ class MetadataRepository:
         one's chunks and vectors.
         """
         with self._connect() as conn:
-            row = conn.execute(
-                "SELECT * FROM documents WHERE file_path = ?;", (file_path,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM documents WHERE file_path = ?;", (file_path,)).fetchone()
         return DocumentRecord.from_row(row) if row else None
 
-    def list_documents(self, status: Optional[str] = None) -> list[DocumentRecord]:
+    def list_documents(self, status: str | None = None) -> list[DocumentRecord]:
         with self._connect() as conn:
             if status is None:
-                rows = conn.execute(
-                    "SELECT * FROM documents ORDER BY created_at DESC;"
-                ).fetchall()
+                rows = conn.execute("SELECT * FROM documents ORDER BY created_at DESC;").fetchall()
             else:
                 rows = conn.execute(
                     "SELECT * FROM documents WHERE status = ? ORDER BY created_at DESC;",
@@ -200,10 +219,12 @@ class MetadataRepository:
             conn.execute(
                 """
                 INSERT INTO documents
-                    (id, file_name, file_path, file_type, law_name, file_hash,
+                    (id, file_name, file_path, file_type, law_name,
+                     collection_id, collection_category, collection_title, file_hash,
                      file_size_bytes, num_chunks, status, error_message,
                      created_at, updated_at)
-                VALUES (:id, :file_name, :file_path, :file_type, :law_name, :file_hash,
+                VALUES (:id, :file_name, :file_path, :file_type, :law_name,
+                        :collection_id, :collection_category, :collection_title, :file_hash,
                         :file_size_bytes, :num_chunks, :status, :error_message,
                         :created_at, :updated_at)
                 ON CONFLICT(id) DO UPDATE SET
@@ -211,6 +232,9 @@ class MetadataRepository:
                     file_path=excluded.file_path,
                     file_type=excluded.file_type,
                     law_name=excluded.law_name,
+                    collection_id=excluded.collection_id,
+                    collection_category=excluded.collection_category,
+                    collection_title=excluded.collection_title,
                     file_hash=excluded.file_hash,
                     file_size_bytes=excluded.file_size_bytes,
                     num_chunks=excluded.num_chunks,
@@ -254,9 +278,11 @@ class MetadataRepository:
                 """
                 INSERT INTO chunks
                     (id, document_id, chunk_index, text, char_count,
-                     law_name, article_number, section, page_number, created_at)
+                     law_name, collection_id, collection_category, collection_title,
+                     article_number, section, page_number, created_at)
                 VALUES (:id, :document_id, :chunk_index, :text, :char_count,
-                        :law_name, :article_number, :section, :page_number, :created_at)
+                        :law_name, :collection_id, :collection_category, :collection_title,
+                        :article_number, :section, :page_number, :created_at)
                 """,
                 [c.model_dump() for c in chunks],
             )
@@ -275,7 +301,7 @@ class MetadataRepository:
             ).fetchall()
         return [ChunkRecord.from_row(r) for r in rows]
 
-    def get_chunk(self, chunk_id: str) -> Optional[ChunkRecord]:
+    def get_chunk(self, chunk_id: str) -> ChunkRecord | None:
         with self._connect() as conn:
             row = conn.execute("SELECT * FROM chunks WHERE id = ?;", (chunk_id,)).fetchone()
         return ChunkRecord.from_row(row) if row else None
@@ -290,9 +316,7 @@ class MetadataRepository:
             return []
         placeholders = ",".join("?" for _ in chunk_ids)
         with self._connect() as conn:
-            rows = conn.execute(
-                f"SELECT * FROM chunks WHERE id IN ({placeholders});", chunk_ids
-            ).fetchall()
+            rows = conn.execute(f"SELECT * FROM chunks WHERE id IN ({placeholders});", chunk_ids).fetchall()
         return [ChunkRecord.from_row(r) for r in rows]
 
     def get_all_chunks(self) -> list[ChunkRecord]:
@@ -300,6 +324,48 @@ class MetadataRepository:
         with self._connect() as conn:
             rows = conn.execute("SELECT * FROM chunks ORDER BY id ASC;").fetchall()
         return [ChunkRecord.from_row(r) for r in rows]
+
+    def get_collections(self) -> list[CollectionSummary]:
+        """List every distinct collection with its document/chunk counts.
+
+        Drives `GET /api/collections` (the "Browse Laws" picker) and any
+        UI needing a list of scopeable law codes. Aggregation happens in
+        SQL, same rationale as `get_statistics()`.
+        """
+        from app.config.collections import SOURCE_URLS
+
+        with self._connect() as conn:
+            doc_rows = conn.execute(
+                """
+                SELECT collection_id, collection_category, collection_title, COUNT(*) AS n
+                FROM documents
+                WHERE collection_id IS NOT NULL
+                GROUP BY collection_id;
+                """
+            ).fetchall()
+            chunk_rows = conn.execute(
+                """
+                SELECT collection_id, COUNT(*) AS n
+                FROM chunks
+                WHERE collection_id IS NOT NULL
+                GROUP BY collection_id;
+                """
+            ).fetchall()
+
+        chunk_counts = {row["collection_id"]: row["n"] for row in chunk_rows}
+        summaries = [
+            CollectionSummary(
+                collection_id=row["collection_id"],
+                category=row["collection_category"],
+                title=row["collection_title"],
+                num_documents=row["n"],
+                num_chunks=chunk_counts.get(row["collection_id"], 0),
+                source_url=SOURCE_URLS.get(row["collection_id"]),
+            )
+            for row in doc_rows
+        ]
+        summaries.sort(key=lambda s: (s.category or "", s.title or s.collection_id))
+        return summaries
 
     # -- aggregate stats (drives the Statistics page, Milestone 19) -----------------
 
@@ -321,15 +387,19 @@ class MetadataRepository:
         with self._connect() as conn:
             doc_count = conn.execute("SELECT COUNT(*) FROM documents;").fetchone()[0]
             chunk_count = conn.execute("SELECT COUNT(*) FROM chunks;").fetchone()[0]
-            avg_chunk_chars = conn.execute(
-                "SELECT AVG(char_count) FROM chunks;"
-            ).fetchone()[0]
-            by_law = conn.execute(
-                """
-                SELECT COALESCE(law_name, 'Unknown') AS law_name, COUNT(*) AS chunk_count
-                FROM chunks GROUP BY law_name ORDER BY chunk_count DESC;
-                """
-            ).fetchall()
+            avg_chunk_chars = conn.execute("SELECT AVG(char_count) FROM chunks;").fetchone()[0]
+            # Grouped by collection_title (folder-derived, reliable) rather
+            # than the raw law_name (free text parsed from document
+            # content) — law_name is inconsistent across documents (some
+            # extract a generic phrase like "Oʻzbekiston Respublikasining
+            # Qonuni" instead of the specific law title), which used to
+            # collapse dozens of distinct laws into one misleading bucket
+            # here. Falls back to law_name/'Unknown' only for any legacy
+            # rows indexed before collection_id existed.
+            by_law = conn.execute("""
+                SELECT COALESCE(collection_title, law_name, 'Unknown') AS law_name, COUNT(*) AS chunk_count
+                FROM chunks GROUP BY COALESCE(collection_title, law_name, 'Unknown') ORDER BY chunk_count DESC;
+                """).fetchall()
             by_status = conn.execute(
                 "SELECT status, COUNT(*) AS n FROM documents GROUP BY status;"
             ).fetchall()

@@ -118,7 +118,6 @@ BEST PRACTICES APPLIED
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Optional
 
 import numpy as np
 
@@ -148,10 +147,13 @@ class RerankedResult(HybridSearchResult):
     """
 
     text: str
-    law_name: Optional[str] = None
-    article_number: Optional[str] = None
-    section: Optional[str] = None
-    page_number: Optional[int] = None
+    law_name: str | None = None
+    collection_id: str | None = None
+    collection_category: str | None = None
+    collection_title: str | None = None
+    article_number: str | None = None
+    section: str | None = None
+    page_number: int | None = None
     reranker_score: float = 0.0
 
 
@@ -178,7 +180,7 @@ def _sigmoid(x: np.ndarray) -> np.ndarray:
 class RerankerModel:
     """Reranks hybrid retrieval candidates using a cross-encoder."""
 
-    def __init__(self, model_name: Optional[str] = None, device: Optional[str] = None) -> None:
+    def __init__(self, model_name: str | None = None, device: str | None = None) -> None:
         self.model_name = model_name or settings.reranker_model
         self.device = resolve_device(device or settings.reranker_device)
         self._model = _load_cross_encoder(self.model_name, self.device)
@@ -188,7 +190,7 @@ class RerankerModel:
         query: str,
         candidates: list[HybridSearchResult],
         chunks: dict[str, ChunkRecord],
-        top_k: Optional[int] = None,
+        top_k: int | None = None,
     ) -> list[RerankedResult]:
         """Rerank `candidates` by cross-encoder relevance to `query`.
 
@@ -227,6 +229,9 @@ class RerankerModel:
                 **candidate.model_dump(),
                 text=chunks[candidate.chunk_id].text,
                 law_name=chunks[candidate.chunk_id].law_name,
+                collection_id=chunks[candidate.chunk_id].collection_id,
+                collection_category=chunks[candidate.chunk_id].collection_category,
+                collection_title=chunks[candidate.chunk_id].collection_title,
                 article_number=chunks[candidate.chunk_id].article_number,
                 section=chunks[candidate.chunk_id].section,
                 page_number=chunks[candidate.chunk_id].page_number,

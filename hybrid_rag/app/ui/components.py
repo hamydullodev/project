@@ -24,8 +24,6 @@ theme-aware primitives is the more robust choice, not a shortcut.
 
 from __future__ import annotations
 
-from typing import Optional
-
 import streamlit as st
 
 from app.reranker import RerankedResult
@@ -49,9 +47,7 @@ def status_badge(is_ok: bool, ok_label: str, fail_label: str) -> None:
         st.error(f"❌ {fail_label}")
 
 
-def render_chunk_card(
-    index: int, chunk: RerankedResult, status_label: Optional[str] = None
-) -> None:
+def render_chunk_card(index: int, chunk: RerankedResult, status_label: str | None = None) -> None:
     """A single expandable card for one retrieved/reranked chunk.
 
     Shared by the Chat page (Milestone 16, as its "Manbalar"/source

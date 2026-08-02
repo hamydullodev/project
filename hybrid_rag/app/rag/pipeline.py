@@ -118,13 +118,13 @@ BEST PRACTICES APPLIED
 
 from __future__ import annotations
 
-from typing import Iterator, Optional
+from collections.abc import Iterator
 
 from pydantic import BaseModel
 
 from app.config import settings
 from app.database import MetadataRepository
-from app.llm import OllamaLLM
+from app.llm import GeminiLLM, OllamaLLM, get_llm
 from app.prompts import NOT_FOUND_MESSAGE_UZ, build_messages
 from app.rag.context_compression import CompressionResult, compress_context
 from app.rag.query_processing import preprocess_query
@@ -173,12 +173,12 @@ class RAGPipeline:
 
     def __init__(
         self,
-        repo: Optional[MetadataRepository] = None,
-        embedding_model: Optional[EmbeddingModel] = None,
-        vector_store: Optional[FAISSVectorStore] = None,
-        bm25_index: Optional[BM25SparseIndex] = None,
-        reranker: Optional[RerankerModel] = None,
-        llm: Optional[OllamaLLM] = None,
+        repo: MetadataRepository | None = None,
+        embedding_model: EmbeddingModel | None = None,
+        vector_store: FAISSVectorStore | None = None,
+        bm25_index: BM25SparseIndex | None = None,
+        reranker: RerankerModel | None = None,
+        llm: OllamaLLM | GeminiLLM | None = None,
     ) -> None:
         self.repo = repo or MetadataRepository()
         self.embedding_model = embedding_model or get_default_embedding_model()
@@ -203,7 +203,7 @@ class RAGPipeline:
 
         self.retriever = HybridRetriever(self.vector_store, self.bm25_index, self.embedding_model)
         self.reranker = reranker or RerankerModel()
-        self.llm = llm or OllamaLLM()
+        self.llm = llm or get_llm()
 
         logger.info(
             "RAGPipeline ready: %d vector(s), %d BM25 chunk(s)",
@@ -211,20 +211,48 @@ class RAGPipeline:
             len(self.bm25_index),
         )
 
-    def retrieve(self, raw_query: str) -> RetrievalContext:
+    def retrieve(self, raw_query: str, collection_ids: list[str] | None = None) -> RetrievalContext:
         """Preprocess, hybrid-retrieve, rerank, and compress — no LLM call.
 
         Raises `EmptyQueryError` (from `preprocess_query`) for empty or
         whitespace-only input, propagated to the caller rather than
         swallowed, so the UI can show a specific "enter a question"
         message.
+
+        `collection_ids`, when given, scopes retrieval to only those
+        collections (see `app/config/collections.py`) — e.g. "search only
+        Oila kodeksi", or several ids at once for cross-code search
+        (spec: search Family Code + Guardianship Law + Child Rights Law
+        together, combined into one ranked list). This is implemented as
+        a POST-filter on hybrid search results, not a FAISS/BM25-level
+        filtered search (see `app/retriever/hybrid_retriever.py` — neither
+        index supports metadata filtering natively without a much larger
+        architectural change, not justified at this corpus size). Because
+        filtering happens after the union of dense+sparse top-`top_k`
+        candidates, a narrow collection scope could otherwise be starved
+        of candidates if `top_k` weren't widened first — `top_k` is
+        multiplied by `settings.retrieval_filter_oversample` whenever a
+        scope is active, so reranking still sees a reasonably sized pool.
         """
         query = preprocess_query(raw_query)
 
-        hybrid_results = self.retriever.retrieve(query, top_k=settings.top_k)
+        effective_top_k = settings.top_k
+        if collection_ids:
+            effective_top_k = settings.top_k * settings.retrieval_filter_oversample
+
+        hybrid_results = self.retriever.retrieve(query, top_k=effective_top_k)
 
         chunk_ids = [r.chunk_id for r in hybrid_results]
         chunks_by_id = {c.id: c for c in self.repo.get_chunks_by_ids(chunk_ids)}
+
+        if collection_ids:
+            allowed = set(collection_ids)
+            hybrid_results = [
+                r
+                for r in hybrid_results
+                if (chunk := chunks_by_id.get(r.chunk_id)) is not None and chunk.collection_id in allowed
+            ]
+
         reranked = self.reranker.rerank(query, hybrid_results, chunks_by_id, top_k=settings.rerank_top_k)
 
         compression = compress_context(reranked)
@@ -233,9 +261,9 @@ class RAGPipeline:
             query=query, hybrid_results=hybrid_results, reranked=reranked, compression=compression
         )
 
-    def ask(self, raw_query: str) -> RAGAnswer:
+    def ask(self, raw_query: str, collection_ids: list[str] | None = None) -> RAGAnswer:
         """Answer `raw_query`, generating a complete (non-streaming) response."""
-        context = self.retrieve(raw_query)
+        context = self.retrieve(raw_query, collection_ids=collection_ids)
 
         if not context.compression.kept:
             logger.info("No relevant sources found for query=%r; skipping LLM call.", context.query)
@@ -273,7 +301,9 @@ class RAGPipeline:
         messages = build_messages(context.query, context.compression.kept)
         return self.llm.stream(messages)
 
-    def ask_stream(self, raw_query: str) -> tuple[RetrievalContext, Iterator[str]]:
+    def ask_stream(
+        self, raw_query: str, collection_ids: list[str] | None = None
+    ) -> tuple[RetrievalContext, Iterator[str]]:
         """Answer `raw_query`, streaming the answer text as it's generated.
 
         Returns `(context, stream)` — `context` (including sources) is
@@ -282,5 +312,5 @@ class RAGPipeline:
         produces the answer's text incrementally as the caller iterates
         it (what the Chat UI, Milestone 16, needs for a typing effect).
         """
-        context = self.retrieve(raw_query)
+        context = self.retrieve(raw_query, collection_ids=collection_ids)
         return context, self.stream_from_context(context)

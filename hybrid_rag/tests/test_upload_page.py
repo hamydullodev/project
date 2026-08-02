@@ -20,7 +20,7 @@ from pathlib import Path
 import pytest
 from streamlit.testing.v1 import AppTest
 
-from app.ui.pages.upload import UploadOutcome, _process_uploads, _save_and_validate
+from app.ui.pages.upload import UploadOutcome, _save_and_validate
 
 PAGE_PATH = str(Path(__file__).resolve().parent.parent / "app" / "ui" / "pages" / "upload.py")
 
@@ -45,7 +45,7 @@ class FakeUploadedFile:
 def test_save_and_validate_saves_valid_txt_file(tmp_path: Path):
     target_dir = tmp_path / "uploaded"
     target_dir.mkdir()
-    fake_file = FakeUploadedFile("test.txt", "1-modda. Qonun matni.".encode("utf-8"))
+    fake_file = FakeUploadedFile("test.txt", b"1-modda. Qonun matni.")
 
     outcome = _save_and_validate(fake_file, target_dir)
 
@@ -95,7 +95,7 @@ def test_save_and_validate_marks_overwrite(tmp_path: Path):
     target_dir.mkdir()
     (target_dir / "existing.txt").write_text("Eski matn.", encoding="utf-8")
 
-    fake_file = FakeUploadedFile("existing.txt", "Yangi matn.".encode("utf-8"))
+    fake_file = FakeUploadedFile("existing.txt", b"Yangi matn.")
     outcome = _save_and_validate(fake_file, target_dir)
 
     assert outcome.status == "saved"
@@ -160,9 +160,7 @@ def test_upload_page_end_to_end_valid_file(tmp_path: Path, monkeypatch: pytest.M
     at = AppTest.from_file(PAGE_PATH)
     at.run()
 
-    at.get("file_uploader")[0].upload(
-        "qonun.txt", "1-modda. Sinov qonuni matni.".encode("utf-8"), "text/plain"
-    ).run()
+    at.get("file_uploader")[0].upload("qonun.txt", b"1-modda. Sinov qonuni matni.", "text/plain").run()
 
     upload_buttons = [b for b in at.button if "yuklash" in b.label.lower()]
     assert len(upload_buttons) == 1
@@ -184,9 +182,7 @@ def test_upload_page_shows_index_link_after_successful_upload(
 
     at = AppTest.from_file(PAGE_PATH)
     at.run()
-    at.get("file_uploader")[0].upload(
-        "qonun.txt", "1-modda. Sinov qonuni matni.".encode("utf-8"), "text/plain"
-    ).run()
+    at.get("file_uploader")[0].upload("qonun.txt", b"1-modda. Sinov qonuni matni.", "text/plain").run()
     [b for b in at.button if "yuklash" in b.label.lower()][0].click().run()
 
     assert not at.exception

@@ -1,39 +1,54 @@
 <div align="center">
 
-<img src="docs/banner.svg" alt="UzLaw AI — AI-powered Legal Intelligence for Uzbekistan" width="100%" />
+<img src="docs/banner.svg" alt="UzLaw AI — Oʻzbekiston uchun sunʼiy intellekt asosidagi yuridik yordamchi" width="100%" />
 
 <br/>
 
-<a href="#quick-start"><img src="https://img.shields.io/badge/🚀_Quick_Start-6D5EF0?style=for-the-badge&logoColor=white" alt="Quick Start"/></a>
-<a href="docs/"><img src="https://img.shields.io/badge/📖_Documentation-1eb5e0?style=for-the-badge&logoColor=white" alt="Documentation"/></a>
-<a href="https://github.com/hamydullodev/project/tree/main/hybrid_rag"><img src="https://img.shields.io/badge/💻_Source_Code-22c55e?style=for-the-badge&logoColor=white" alt="Source Code"/></a>
+<a href="#-tezkor-boshlash"><img src="https://img.shields.io/badge/🚀_Tezkor_boshlash-6D5EF0?style=for-the-badge&logoColor=white" alt="Tezkor boshlash"/></a>
+<a href="docs/"><img src="https://img.shields.io/badge/📖_Hujjatlar-1eb5e0?style=for-the-badge&logoColor=white" alt="Hujjatlar"/></a>
+<a href="https://github.com/hamydullodev/project/tree/main/hybrid_rag"><img src="https://img.shields.io/badge/💻_Manba_kodi-22c55e?style=for-the-badge&logoColor=white" alt="Manba kodi"/></a>
 
 <br/><br/>
 
-<img src="https://img.shields.io/badge/🧠_AI_Powered-6D5EF0?style=flat-square" alt=""/>
-<img src="https://img.shields.io/badge/⚖️_Legal_AI-6D5EF0?style=flat-square" alt=""/>
-<img src="https://img.shields.io/badge/🇺🇿_Uzbekistan-1eb5e0?style=flat-square" alt=""/>
+<img src="https://img.shields.io/badge/🧠_AI_asosida-6D5EF0?style=flat-square" alt=""/>
+<img src="https://img.shields.io/badge/⚖️_Yuridik_AI-6D5EF0?style=flat-square" alt=""/>
+<img src="https://img.shields.io/badge/🇺🇿_Oʻzbekiston-1eb5e0?style=flat-square" alt=""/>
 <img src="https://img.shields.io/badge/🔍_Hybrid_RAG-1eb5e0?style=flat-square" alt=""/>
-<img src="https://img.shields.io/badge/⚡_Fast_Retrieval-22c55e?style=flat-square" alt=""/>
-<img src="https://img.shields.io/badge/📖_Citations-22c55e?style=flat-square" alt=""/>
-<img src="https://img.shields.io/badge/🧪_Tested-64748b?style=flat-square" alt=""/>
-<a href="LICENSE"><img src="https://img.shields.io/badge/📄_MIT-64748b?style=flat-square" alt="MIT License"/></a>
+<img src="https://img.shields.io/badge/📚_68_ta_qonun-1eb5e0?style=flat-square" alt=""/>
+<img src="https://img.shields.io/badge/📄_Hujjat_tahlili-22c55e?style=flat-square" alt=""/>
+<img src="https://img.shields.io/badge/📖_Iqtiboslar-22c55e?style=flat-square" alt=""/>
+<img src="https://img.shields.io/badge/🧪_Testlangan-64748b?style=flat-square" alt=""/>
+<a href="LICENSE"><img src="https://img.shields.io/badge/📄_MIT-64748b?style=flat-square" alt="MIT litsenziyasi"/></a>
 
 </div>
 
 <br/>
 
-## 🎯 What it does
+## 🎯 Loyiha nima qiladi
 
-**UzLaw AI** answers legal questions in Uzbek, grounded in the actual
-text of Uzbekistan's legal codes — hybrid retrieval (FAISS + BM25) finds
-the right articles, a reranker verifies relevance, and a local LLM
-answers *only* from what was retrieved. Fully offline after setup, no
-cloud APIs, every answer cited and expandable back to source.
+**UzLaw AI** — Oʻzbekiston Respublikasi qonun hujjatlari asosida savollarga
+javob beruvchi sunʼiy intellekt yordamchisi. Javoblar hech qachon
+oʻylab topilmaydi — har biri qidiruv orqali topilgan haqiqiy modda
+matniga asoslanadi va aynan qaysi qonun, qaysi moddadan olinganini
+koʻrsatadi.
+
+- 🏛 **68 ta qonun hujjati** — 18 kodeks, 49 qonun va Konstitutsiya, yagona
+  qidiruv tizimida (yangi qonun qoʻshish uchun shunchaki papka yaratish kifoya)
+- 🔍 **Hybrid qidiruv** — FAISS (maʼno boʻyicha) + BM25 (aniq atama boʻyicha),
+  natijalar birlashtirilib, cross-encoder orqali qayta saralanadi
+- 🧭 **Kolleksiya boʻyicha qidiruv** — bitta kodeks ichida yoki bir nechta
+  qonun boʻylab (masalan, Oila kodeksi + Vasiylik qonuni) birgalikda qidirish
+- 📄 **Hujjat yuklab tahlil qilish** — PDF/DOCX/TXT/skanerlangan rasmni
+  yuklang, sunʼiy intellekt xulosa, huquq-majburiyatlar, muddatlar va
+  ehtimoliy oqibatlarni ajratib beradi
+- 🤖 **Ikki LLM provayder** — toʻliq lokal (Ollama) yoki bulutli (Gemini),
+  `.env` faylda bir qatorda almashtiriladi
+- 📖 **Har doim iqtibos bilan** — javobda aniq qonun nomi va modda raqami
+  koʻrsatiladi; topilmasa, shunday deb ochiq aytiladi
 
 <br/>
 
-## 🧱 Tools used
+## 🧱 Texnologiyalar
 
 <div align="center">
 
@@ -45,39 +60,41 @@ cloud APIs, every answer cited and expandable back to source.
 <img src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"/>
 <img src="https://img.shields.io/badge/FAISS-4f8ef7?style=flat-square" alt="FAISS"/>
 <img src="https://img.shields.io/badge/BM25-4f8ef7?style=flat-square" alt="BM25"/>
+<img src="https://img.shields.io/badge/Gemini-6D5EF0?style=flat-square&logo=googlegemini&logoColor=white" alt="Gemini"/>
 <img src="https://img.shields.io/badge/Ollama-black?style=flat-square" alt="Ollama"/>
 <img src="https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite"/>
 
 </div>
 
-| Layer | Choice |
+| Qatlam | Tanlov |
 |---|---|
 | **Frontend** | Next.js · TypeScript · Tailwind CSS · Framer Motion |
-| **Backend** | FastAPI, streaming answers over Server-Sent Events |
-| **Retrieval** | FAISS (dense) + BM25 (sparse), fused and reranked by a cross-encoder |
-| **LLM** | Local, via [Ollama](https://ollama.com) — no cloud API calls |
-| **Internal tool** | Streamlit (index management, retrieval debug, stats) |
+| **Backend** | FastAPI, Server-Sent Events orqali striming javoblar |
+| **Qidiruv** | FAISS (dense) + BM25 (sparse), cross-encoder bilan qayta saralanadi |
+| **LLM** | Gemini (bulutli) yoki [Ollama](https://ollama.com) (toʻliq lokal) — `.env`da tanlanadi |
+| **Maʼlumotlar bazasi** | SQLite (hujjat/boʻlak metama'lumotlari) + FAISS/BM25 indekslari |
+| **Ichki vosita** | Streamlit (indeks boshqaruvi, qidiruv diagnostikasi, statistika) |
 
 <br/>
 
-## 🏗️ Architecture
+## 🏗️ Arxitektura
 
 ```mermaid
 flowchart LR
-    A([User question]) --> B{Hybrid retrieval}
+    A([Foydalanuvchi savoli]) --> B{Hybrid qidiruv}
     B --> D1[("FAISS · dense")]
     B --> D2[("BM25 · sparse")]
-    D1 --> E[Fuse + rerank]
+    D1 --> E[Birlashtirish + qayta saralash]
     D2 --> E
-    E --> F[["Local LLM · Ollama"]]
-    F --> G([Answer + citations])
+    E --> F[["LLM · Gemini / Ollama"]]
+    F --> G([Javob + iqtiboslar])
 
     style A fill:#7c6ff0,color:#fff,stroke:none
     style G fill:#22c55e,color:#fff,stroke:none
     style F fill:#4f8ef7,color:#fff,stroke:none
 ```
 
-Full breakdown (request sequence, module boundaries, API contract):
+Toʻliq tafsilotlar (so'rov ketma-ketligi, modul chegaralari, API shartnomasi):
 [`docs/architecture.md`](docs/architecture.md).
 
 <br/>
@@ -86,22 +103,27 @@ Full breakdown (request sequence, module boundaries, API contract):
 
 | Qadam | Nima boʻladi |
 |:---:|---|
-| 1️⃣ | Savol FAISS (maʼno boʻyicha) va BM25 (aniq atama boʻyicha) orqali qidiriladi |
+| 1️⃣ | Savol FAISS (maʼno boʻyicha) va BM25 (aniq atama boʻyicha) orqali qidiriladi — ixtiyoriy ravishda bitta yoki bir nechta kolleksiya bilan cheklanadi |
 | 2️⃣ | Ikkala natija birlashtiriladi, cross-encoder qayta saralaydi |
-| 3️⃣ | Eng mos manbalar mahalliy LLM (Ollama)ga uzatiladi |
-| 4️⃣ | Javob manbalarga asoslanib, iqtibos bilan striming tarzida qaytariladi |
+| 3️⃣ | Eng mos manbalar tanlangan LLM (Gemini yoki Ollama)ga uzatiladi |
+| 4️⃣ | Javob faqat manbalarga asoslanib, iqtibos bilan striming tarzida qaytariladi |
+
+Hujjat yuklab tahlil qilishda esa retrieval bosqichi ishtirok etmaydi —
+faqat yuklangan hujjatning oʻz matni tahlil qilinadi, shu bois "tegishli
+qonunlar" boʻlimi faqat hujjatning oʻzida zikr etilgan qonunlarni
+koʻrsatadi, oʻylab topilmagan.
 
 <br/>
 
 ## 🎬 Demo
 
 <div align="center">
-<img src="docs/demo.gif" alt="UzLaw AI demo — asking a question and getting a cited answer" width="100%" />
+<img src="docs/demo.gif" alt="UzLaw AI demosi — savol berish va iqtibosli javob olish" width="100%" />
 </div>
 
 <br/>
 
-## 🚀 Quick start
+## 🚀 Tezkor boshlash
 
 ```bash
 # Backend
@@ -110,42 +132,90 @@ pip install -r requirements.txt
 cp .env.example .env
 python run_api.py                   # http://localhost:8000
 
-# Frontend (separate terminal)
+# Frontend (alohida terminalda)
 cd frontend && npm install && cp .env.local.example .env.local
 npm run dev                         # http://localhost:3000
 
-# Local LLM (separate terminal)
+# Lokal LLM ishlatmoqchi bo'lsangiz (alohida terminalda)
 ollama pull llama3.2:3b && ollama serve
+# Yoki .env faylda LLM_PROVIDER=gemini va GEMINI_API_KEY qo'ying
 ```
 
-First launch needs an index build — see
-[`docs/deployment.md`](docs/deployment.md). Full setup, config
-reference, and the Streamlit debug tool: [`docs/`](docs/).
+Birinchi ishga tushirishda indeks qurish kerak — qarang
+[`docs/deployment.md`](docs/deployment.md). To'liq sozlash, konfiguratsiya
+ma'lumotnomasi va Streamlit diagnostika vositasi: [`docs/`](docs/).
 
 <br/>
 
-## 📚 Docs
+## 💬 Namuna so'rovlar
 
-[Architecture](docs/architecture.md) ·
-[Hybrid Retrieval](docs/hybrid-retrieval.md) ·
-[Evaluation](docs/evaluation.md) ·
-[Configuration](docs/configuration.md) ·
-[Deployment](docs/deployment.md)
+- *"Mehnat shartnomasini ish beruvchi qanday bekor qiladi?"*
+- *"Jinoyat javobgarligi yoshi nechchidan boshlanadi?"*
+- *"Vasiylik va homiylik qanday rasmiylashtiriladi?"*
+- *"Oila kodeksi haqida umumiy ma'lumot bering"* — bir nechta kolleksiya
+  bo'ylab qidiruv
+- 📎 Ijara shartnomangizni yuklang — "+" tugmasi orqali huquq, majburiyat
+  va muddatlarni avtomatik tahlil qildiring
 
 <br/>
 
-## 📄 License
+## 📂 Loyiha tuzilishi
 
-MIT — see [`LICENSE`](LICENSE).
+```
+hybrid_rag/
+├── app/                  # RAG yadrosi — ilova-freymvorkdan mustaqil
+│   ├── config/           #   sozlamalar + kolleksiya (qonun) identifikatsiyasi
+│   ├── database/         #   SQLite sxemasi va repozitoriy
+│   ├── ingestion/        #   hujjat yuklash, tozalash, bo'laklash
+│   ├── retriever/        #   FAISS, BM25, hybrid qidiruv
+│   ├── reranker/         #   cross-encoder qayta saralash
+│   ├── rag/               #   so'rovni qayta ishlash, RAG quvuri
+│   ├── llm/               #   Ollama va Gemini provayderlari
+│   ├── prompts/           #   LLM uchun prompt shablonlari
+│   └── ui/                #   Streamlit ichki vosita
+├── api/                  # FastAPI HTTP qatlami (Next.js frontend uchun)
+│   └── routers/           #   /ask, /analyze-document, /collections, /health
+├── frontend/              # Next.js mahsulot interfeysi
+├── tests/                # pytest test to'plami
+├── docs/                 # arxitektura, joylashtirish, baholash hujjatlari
+└── data/, indexes/         # SQLite maʼlumotlar bazasi va FAISS/BM25 indekslari
+```
+
+<br/>
+
+## 📚 Hujjatlar
+
+[Arxitektura](docs/architecture.md) ·
+[Hybrid qidiruv](docs/hybrid-retrieval.md) ·
+[Baholash](docs/evaluation.md) ·
+[Konfiguratsiya](docs/configuration.md) ·
+[Joylashtirish](docs/deployment.md)
+
+<br/>
+
+## 🔭 Kelajakdagi rejalar
+
+- 🧭 Fuqarolarga bosqichma-bosqich yo'l-yo'riq (masalan, "farzand asrab
+  olish qanday amalga oshiriladi")
+- 🔗 Hujjat tahlilini indekslangan korpus bilan bog'lash (tasdiqlangan
+  "tegishli moddalar" tavsiyasi)
+- 🌐 Sinonim kengaytirish va so'rovni tushunishni yaxshilash
+- 📊 Har bir javob uchun ishonch balli va ko'rsatkichlari
+
+<br/>
+
+## 📄 Litsenziya
+
+MIT — qarang [`LICENSE`](LICENSE).
 
 > [!IMPORTANT]
-> The included legal texts are Uzbekistan's public legal codes. Verify
-> against an official source ([lex.uz](https://lex.uz)) before relying
-> on any answer for a real legal decision — this is an educational
-> retrieval system, not legal advice.
+> Kiritilgan qonun matnlari Oʻzbekiston Respublikasining ochiq qonun
+> hujjatlaridir. Har qanday haqiqiy huquqiy qaror qabul qilishdan oldin
+> rasmiy manba ([lex.uz](https://lex.uz)) bilan solishtirib tekshiring —
+> bu ta'lim maqsadidagi qidiruv tizimi, yuridik maslahat emas.
 
 <br/>
 
 <div align="center">
-<sub>⚖️ UzLaw AI · AI-powered Legal Intelligence for Uzbekistan</sub>
+<sub>⚖️ UzLaw AI · Oʻzbekiston uchun sunʼiy intellekt asosidagi yuridik yordamchi</sub>
 </div>

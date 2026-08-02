@@ -125,7 +125,9 @@ def test_retrieval_quality_meets_floor(retrieval_stack):
         f"Queries with no hit in top-{settings.rerank_top_k}: {failure_detail or 'none'}"
     )
     assert aggregate["ndcg_at_k"] >= 0.5, f"nDCG@{settings.rerank_top_k} dropped below floor: {aggregate}"
-    assert aggregate["precision_at_k"] >= 0.15, f"Precision@{settings.rerank_top_k} dropped below floor: {aggregate}"
+    assert (
+        aggregate["precision_at_k"] >= 0.15
+    ), f"Precision@{settings.rerank_top_k} dropped below floor: {aggregate}"
 
     # Every query should at least find its answer SOMEWHERE in the wider
     # (pre-rerank_top_k) candidate pool, even on a run where reranking

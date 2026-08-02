@@ -34,7 +34,6 @@ import json
 import resource
 import sys
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 import streamlit as st
@@ -75,9 +74,7 @@ def _render_law_breakdown(stats: dict) -> None:
         st.info("Hali hech qanday hujjat indekslanmagan.")
         return
 
-    df = pd.DataFrame(
-        [{"Qonun": law, "Boʻlaklar soni": count} for law, count in chunks_by_law.items()]
-    )
+    df = pd.DataFrame([{"Qonun": law, "Boʻlaklar soni": count} for law, count in chunks_by_law.items()])
     st.dataframe(df, width="stretch", hide_index=True)
     st.bar_chart(df.set_index("Qonun"))
 
@@ -118,7 +115,7 @@ def _render_memory_metrics() -> None:
 # -- helpers ------------------------------------------------------------------------
 
 
-def _embedding_dimension() -> Optional[int]:
+def _embedding_dimension() -> int | None:
     meta_path = Path(f"{settings.vector_path_resolved}.meta.json")
     if not meta_path.exists():
         return None
@@ -129,12 +126,12 @@ def _embedding_dimension() -> Optional[int]:
         return None
 
 
-def _faiss_index_size_and_count() -> tuple[int, Optional[int]]:
+def _faiss_index_size_and_count() -> tuple[int, int | None]:
     index_path = Path(f"{settings.vector_path_resolved}.faiss")
     meta_path = Path(f"{settings.vector_path_resolved}.meta.json")
     total_bytes = _file_size(index_path) + _file_size(meta_path)
 
-    vector_count: Optional[int] = None
+    vector_count: int | None = None
     if meta_path.exists():
         try:
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
@@ -157,7 +154,7 @@ def _format_bytes(num_bytes: int) -> str:
     return f"{size:.1f} TB"  # pragma: no cover - unreachable at this project's scale
 
 
-def _process_memory_bytes() -> Optional[int]:
+def _process_memory_bytes() -> int | None:
     try:
         ru_maxrss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     except Exception:  # noqa: BLE001 - a stats display must never crash the page

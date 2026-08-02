@@ -25,7 +25,9 @@ logger = get_logger(__name__)
 
 def main() -> None:
     settings = get_api_settings()
-    logger.info("Starting Hybrid RAG API on http://%s:%d (reload=%s)", settings.host, settings.port, settings.reload)
+    logger.info(
+        "Starting Hybrid RAG API on http://%s:%d (reload=%s)", settings.host, settings.port, settings.reload
+    )
     uvicorn.run("api.main:app", host=settings.host, port=settings.port, reload=settings.reload)
 
 

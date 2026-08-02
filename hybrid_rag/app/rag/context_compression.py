@@ -153,9 +153,7 @@ def compress_context(
     dropped_duplicate: list[RerankedResult] = []
 
     for candidate in results:
-        is_duplicate = any(
-            _jaccard_similarity(candidate.text, k.text) >= similarity_threshold for k in kept
-        )
+        is_duplicate = any(_jaccard_similarity(candidate.text, k.text) >= similarity_threshold for k in kept)
         if is_duplicate:
             dropped_duplicate.append(candidate)
         else:

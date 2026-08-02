@@ -30,7 +30,8 @@ THE EVENT PROTOCOL (what the frontend parses)
     (`app/rag/pipeline.py`), so the frontend can style a "not found"
     answer differently without re-implementing the fallback-phrase check.
   - `event: error` — sent if generation fails mid-stream (e.g. Ollama
-    goes down partway through). `data`: `{"message": str}`.
+    goes down, or a hosted provider like Gemini returns a rate-limit/
+    quota/connection error). `data`: `{"message": str}`.
 
 WHY VALIDATION HAPPENS BEFORE THE `StreamingResponse` IS CREATED, NOT INSIDE IT
 ------------------------------------------------------------------------------------------
@@ -60,16 +61,16 @@ model for that specific test.
 from __future__ import annotations
 
 import json
-from typing import Iterator
+from collections.abc import Iterator
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
-from app.llm import LLMConnectionError, LLMModelNotFoundError
-from app.prompts import NOT_FOUND_MESSAGE_UZ
-from app.rag import EmptyQueryError, RAGPipeline, RetrievalContext
 from api.dependencies import get_pipeline
 from api.schemas import AskRequest, SourceOut
+from app.llm import LLMError
+from app.prompts import NOT_FOUND_MESSAGE_UZ
+from app.rag import EmptyQueryError, RAGPipeline, RetrievalContext
 
 router = APIRouter()
 
@@ -77,7 +78,7 @@ router = APIRouter()
 def _pipeline_dependency() -> RAGPipeline:
     try:
         return get_pipeline()
-    except (LLMConnectionError, LLMModelNotFoundError) as e:
+    except LLMError as e:
         raise HTTPException(status_code=503, detail=str(e)) from e
 
 
@@ -94,7 +95,7 @@ def _stream_answer(pipeline: RAGPipeline, context: RetrievalContext) -> Iterator
         for chunk in pipeline.stream_from_context(context):
             full_text_parts.append(chunk)
             yield _sse("token", {"text": chunk})
-    except (LLMConnectionError, LLMModelNotFoundError) as e:
+    except LLMError as e:
         yield _sse("error", {"message": str(e)})
         return
 
@@ -105,7 +106,7 @@ def _stream_answer(pipeline: RAGPipeline, context: RetrievalContext) -> Iterator
 @router.post("/ask")
 def ask(request: AskRequest, pipeline: RAGPipeline = Depends(_pipeline_dependency)) -> StreamingResponse:
     try:
-        context = pipeline.retrieve(request.query)
+        context = pipeline.retrieve(request.query, collection_ids=request.collection_ids)
     except EmptyQueryError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 

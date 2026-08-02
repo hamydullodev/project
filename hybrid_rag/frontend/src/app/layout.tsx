@@ -17,7 +17,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Qonun AI — Oʻzbekiston Qonunchiligi boʻyicha AI Yordamchi",
+  title: "UzLaw AI — AI-powered Legal Intelligence for Uzbekistan",
   description:
     "Mahalliy, xavfsiz va oflayn ishlaydigan hybrid RAG tizimi — Oʻzbekiston Respublikasi qonun hujjatlari asosida savollaringizga javob beradi.",
 };

@@ -1,10 +1,17 @@
 import { API_BASE_URL } from "@/lib/config";
-import type { Source } from "@/lib/types";
+import type { AnalysisInfo, Source } from "@/lib/types";
 
 export interface AskStreamHandlers {
   onSources?: (query: string, sources: Source[]) => void;
   onToken?: (text: string) => void;
   onDone?: (answerFound: boolean) => void;
+  onError?: (message: string) => void;
+}
+
+export interface AnalyzeStreamHandlers {
+  onInfo?: (info: AnalysisInfo) => void;
+  onToken?: (text: string) => void;
+  onDone?: () => void;
   onError?: (message: string) => void;
 }
 
@@ -45,13 +52,52 @@ export async function streamAsk(
     signal,
   });
 
+  await consumeSSEResponse(response, (rawEvent) => dispatchAskEvent(rawEvent, handlers), handlers.onError);
+}
+
+/**
+ * POST `/api/analyze-document` (a `File`, as `multipart/form-data`) and
+ * parse the SSE response — same event-stream shape and same reasoning
+ * for a hand-rolled parser over `EventSource` as `streamAsk` above (see
+ * its docstring), plus `EventSource` can't send a file body at all.
+ * `FormData` lets the browser set the multipart boundary itself; setting
+ * `Content-Type` manually here would omit that boundary and break parsing
+ * server-side.
+ */
+export async function streamAnalyzeDocument(
+  file: File,
+  handlers: AnalyzeStreamHandlers,
+  signal?: AbortSignal,
+): Promise<void> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE_URL}/api/analyze-document`, {
+    method: "POST",
+    body: formData,
+    signal,
+  });
+
+  await consumeSSEResponse(
+    response,
+    (rawEvent) => dispatchAnalyzeEvent(rawEvent, handlers),
+    handlers.onError,
+  );
+}
+
+/** Shared response-validation + SSE read loop for both streaming endpoints above. */
+async function consumeSSEResponse(
+  response: Response,
+  onRawEvent: (rawEvent: string) => void,
+  onError?: (message: string) => void,
+): Promise<void> {
   if (!response.ok) {
-    handlers.onError?.(await extractErrorMessage(response));
+    onError?.(await extractErrorMessage(response));
     return;
   }
 
   if (!response.body) {
-    handlers.onError?.("Serverdan javob olinmadi (boʻsh stream).");
+    onError?.("Serverdan javob olinmadi (boʻsh stream).");
     return;
   }
 
@@ -66,14 +112,39 @@ export async function streamAsk(
 
     let boundary = buffer.indexOf("\n\n");
     while (boundary !== -1) {
-      dispatchEvent(buffer.slice(0, boundary), handlers);
+      onRawEvent(buffer.slice(0, boundary));
       buffer = buffer.slice(boundary + 2);
       boundary = buffer.indexOf("\n\n");
     }
   }
 }
 
-function dispatchEvent(rawEvent: string, handlers: AskStreamHandlers): void {
+function dispatchAnalyzeEvent(rawEvent: string, handlers: AnalyzeStreamHandlers): void {
+  const lines = rawEvent.split("\n");
+  const eventLine = lines.find((line) => line.startsWith("event: "));
+  const dataLine = lines.find((line) => line.startsWith("data: "));
+  if (!eventLine || !dataLine) return;
+
+  const event = eventLine.slice("event: ".length);
+  const data = JSON.parse(dataLine.slice("data: ".length));
+
+  switch (event) {
+    case "info":
+      handlers.onInfo?.(data as AnalysisInfo);
+      break;
+    case "token":
+      handlers.onToken?.(data.text as string);
+      break;
+    case "done":
+      handlers.onDone?.();
+      break;
+    case "error":
+      handlers.onError?.(data.message as string);
+      break;
+  }
+}
+
+function dispatchAskEvent(rawEvent: string, handlers: AskStreamHandlers): void {
   const lines = rawEvent.split("\n");
   const eventLine = lines.find((line) => line.startsWith("event: "));
   const dataLine = lines.find((line) => line.startsWith("data: "));

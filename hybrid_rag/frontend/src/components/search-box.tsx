@@ -2,10 +2,16 @@
 
 import * as React from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Loader2, Search } from "lucide-react";
+import { ArrowRight, FileText, Loader2, Plus, Search, X } from "lucide-react";
 
 import { spawnRipple } from "@/lib/ripple";
 import { cn } from "@/lib/utils";
+
+// Mirrors app/ingestion/loaders.py's SUPPORTED_EXTENSIONS on the backend
+// (pdf/docx/txt/html) plus common image types for scanned documents (the
+// backend's OCR fallback path) — kept here, not imported, since this is a
+// static browser `accept` hint, not a contract the backend enforces.
+const ACCEPTED_FILE_TYPES = ".pdf,.docx,.txt,.html,.htm,image/*";
 
 interface SearchBoxProps {
   value: string;
@@ -13,6 +19,8 @@ interface SearchBoxProps {
   onSubmit: (value: string) => void;
   loading?: boolean;
   className?: string;
+  attachedFile?: File | null;
+  onAttachFile?: (file: File | null) => void;
 }
 
 /**
@@ -29,10 +37,26 @@ interface SearchBoxProps {
  *   than the plain `--ring` shadcn default, for the specific "premium AI
  *   product" look the brief asks for.
  */
-export function SearchBox({ value, onValueChange, onSubmit, loading = false, className }: SearchBoxProps) {
+export function SearchBox({
+  value,
+  onValueChange,
+  onSubmit,
+  loading = false,
+  className,
+  attachedFile = null,
+  onAttachFile,
+}: SearchBoxProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [focused, setFocused] = React.useState(false);
   const [isMac, setIsMac] = React.useState(false);
+
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    onAttachFile?.(file);
+    // Reset so selecting the same file again still fires onChange.
+    event.target.value = "";
+  }
 
   React.useEffect(() => {
     // `navigator` only exists on the client - this is a one-time,
@@ -78,6 +102,22 @@ export function SearchBox({ value, onValueChange, onSubmit, loading = false, cla
             : undefined
         }
       >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={ACCEPTED_FILE_TYPES}
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          aria-label="Hujjat biriktirish"
+          title="Hujjat biriktirish (PDF, DOCX, TXT, rasm)"
+          className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+        >
+          <Plus className="size-4" aria-hidden="true" />
+        </button>
         <Search className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
         <input
           ref={inputRef}
@@ -98,11 +138,11 @@ export function SearchBox({ value, onValueChange, onSubmit, loading = false, cla
         ) : null}
         <motion.button
           type="submit"
-          disabled={loading || !value.trim()}
+          disabled={loading || (!value.trim() && !attachedFile)}
           aria-label="Qidirish"
           onPointerDown={spawnRipple}
-          whileHover={loading || !value.trim() ? undefined : { scale: 1.06 }}
-          whileTap={loading || !value.trim() ? undefined : { scale: 0.94 }}
+          whileHover={loading || (!value.trim() && !attachedFile) ? undefined : { scale: 1.06 }}
+          whileTap={loading || (!value.trim() && !attachedFile) ? undefined : { scale: 0.94 }}
           className={cn(
             "relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl text-white transition-all",
             "disabled:cursor-not-allowed disabled:opacity-40",
@@ -118,6 +158,20 @@ export function SearchBox({ value, onValueChange, onSubmit, loading = false, cla
           )}
         </motion.button>
       </div>
+      {attachedFile ? (
+        <div className="mt-2 flex w-fit items-center gap-2 rounded-full border border-border bg-muted/60 py-1 pl-3 pr-1.5 text-sm">
+          <FileText className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <span className="max-w-48 truncate">{attachedFile.name}</span>
+          <button
+            type="button"
+            onClick={() => onAttachFile?.(null)}
+            aria-label="Hujjatni olib tashlash"
+            className="flex size-5 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-border hover:text-foreground"
+          >
+            <X className="size-3.5" aria-hidden="true" />
+          </button>
+        </div>
+      ) : null}
     </form>
   );
 }

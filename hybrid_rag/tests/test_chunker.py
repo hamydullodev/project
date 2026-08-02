@@ -130,9 +130,7 @@ def test_deduplicate_articles_keeps_number_collisions_with_different_text():
     (number, text) pairs are duplicates."""
     articles = [
         ParsedArticle(article_number="261", section=None, text="261-modda. Neustoyka shakllari"),
-        ParsedArticle(
-            article_number="261", section=None, text="261-modda. Toʻlovga qobiliyatsizlik"
-        ),
+        ParsedArticle(article_number="261", section=None, text="261-modda. Toʻlovga qobiliyatsizlik"),
     ]
     deduped = deduplicate_articles(articles)
     assert len(deduped) == 2
@@ -235,9 +233,7 @@ def test_chunk_document_token_strategy_respects_token_budget():
     text = f"TEST KODEKSI\n1-modda. Token test\n{long_body}\n"
     doc = _loaded(text)
 
-    chunks = chunk_document(
-        doc, file_name="test.txt", chunk_size=50, chunk_overlap=5, strategy="token"
-    )
+    chunks = chunk_document(doc, file_name="test.txt", chunk_size=50, chunk_overlap=5, strategy="token")
 
     assert len(chunks) > 1
     for c in chunks:

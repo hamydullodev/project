@@ -99,7 +99,7 @@ BEST PRACTICES APPLIED
 from __future__ import annotations
 
 import re
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from pydantic import BaseModel
 
@@ -148,10 +148,10 @@ class ChunkDraft(BaseModel):
     chunk_index: int
     text: str
     char_count: int
-    law_name: Optional[str] = None
-    article_number: Optional[str] = None
-    section: Optional[str] = None
-    page_number: Optional[int] = None
+    law_name: str | None = None
+    article_number: str | None = None
+    section: str | None = None
+    page_number: int | None = None
 
 
 class PageMapper:
@@ -170,7 +170,7 @@ class PageMapper:
             offset += len(page_text) + 2  # +2 for the "\n\n" join separator
         self._single_page = len(pages) <= 1
 
-    def page_for_offset(self, char_offset: int) -> Optional[int]:
+    def page_for_offset(self, char_offset: int) -> int | None:
         """Return the 1-based page number containing `char_offset`.
 
         Returns `None` for single-page documents (TXT/DOCX/HTML, or a
@@ -304,9 +304,9 @@ def _chunks_from_plain_text(
 def chunk_document(
     loaded_doc: LoadedDocument,
     file_name: str,
-    chunk_size: Optional[int] = None,
-    chunk_overlap: Optional[int] = None,
-    strategy: Optional[str] = None,
+    chunk_size: int | None = None,
+    chunk_overlap: int | None = None,
+    strategy: str | None = None,
 ) -> list[ChunkDraft]:
     """Chunk a loaded document into metadata-rich `ChunkDraft`s.
 
@@ -329,9 +329,7 @@ def chunk_document(
     articles = deduplicate_articles(articles)
 
     if articles:
-        drafts = _chunks_from_articles(
-            articles, law_name, page_mapper, chunk_size, chunk_overlap, strategy
-        )
+        drafts = _chunks_from_articles(articles, law_name, page_mapper, chunk_size, chunk_overlap, strategy)
     else:
         logger.info(
             "No legal article structure detected in %s; falling back to plain chunking",

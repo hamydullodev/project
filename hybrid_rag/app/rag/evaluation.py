@@ -81,7 +81,6 @@ building it, not guessed).
 from __future__ import annotations
 
 import math
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -119,7 +118,7 @@ class QueryMetrics(BaseModel):
     recall_at_k: float
     reciprocal_rank: float
     ndcg_at_k: float
-    hit_rank: Optional[int] = None  # 1-indexed rank of the first relevant result, if any
+    hit_rank: int | None = None  # 1-indexed rank of the first relevant result, if any
 
 
 # -- pure metric functions (operate on plain relevance-flag lists) ------------------
@@ -151,9 +150,7 @@ def reciprocal_rank(relevance_flags: list[bool]) -> float:
 def _dcg_at_k(relevance_flags: list[bool], k: int) -> float:
     """Discounted Cumulative Gain: binary relevance, discounted by log2(rank + 1)."""
     return sum(
-        1.0 / math.log2(i + 1)
-        for i, is_relevant in enumerate(relevance_flags[:k], start=1)
-        if is_relevant
+        1.0 / math.log2(i + 1) for i, is_relevant in enumerate(relevance_flags[:k], start=1) if is_relevant
     )
 
 
@@ -184,7 +181,7 @@ def evaluate_query(
     reranker: RerankerModel,
     repo: MetadataRepository,
     golden: GoldenQuery,
-    k: Optional[int] = None,
+    k: int | None = None,
 ) -> QueryMetrics:
     """Run one golden query through hybrid retrieval + reranking and score the result.
 
@@ -225,7 +222,7 @@ def evaluate_dataset(
     reranker: RerankerModel,
     repo: MetadataRepository,
     golden_queries: list[GoldenQuery],
-    k: Optional[int] = None,
+    k: int | None = None,
 ) -> list[QueryMetrics]:
     """Evaluate every golden query, logging each result as it's computed."""
     results = []

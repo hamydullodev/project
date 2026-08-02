@@ -16,9 +16,7 @@ from pathlib import Path
 
 from streamlit.testing.v1 import AppTest
 
-PAGE_PATH = str(
-    Path(__file__).resolve().parent.parent / "app" / "ui" / "pages" / "retrieval_debug.py"
-)
+PAGE_PATH = str(Path(__file__).resolve().parent.parent / "app" / "ui" / "pages" / "retrieval_debug.py")
 
 REAL_QUESTION = "Ish beruvchi mehnat shartnomasini qanday bekor qiladi?"
 

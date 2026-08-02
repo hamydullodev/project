@@ -101,7 +101,15 @@ BEST PRACTICES APPLIED
 
 from __future__ import annotations
 
-from app.prompts.templates import SOURCE_HEADER_TEMPLATE, SYSTEM_PROMPT_UZ, USER_PROMPT_TEMPLATE
+from app.config import settings
+from app.prompts.templates import (
+    DOCUMENT_ANALYSIS_SYSTEM_PROMPT_UZ,
+    DOCUMENT_ANALYSIS_USER_TEMPLATE,
+    DOCUMENT_TRUNCATED_NOTICE_UZ,
+    SOURCE_HEADER_TEMPLATE,
+    SYSTEM_PROMPT_UZ,
+    USER_PROMPT_TEMPLATE,
+)
 from app.reranker.cross_encoder import RerankedResult
 
 
@@ -151,5 +159,31 @@ def build_messages(query: str, chunks: list[RerankedResult]) -> list[dict[str, s
     user_content = USER_PROMPT_TEMPLATE.format(context=context_block, question=query)
     return [
         {"role": "system", "content": SYSTEM_PROMPT_UZ},
+        {"role": "user", "content": user_content},
+    ]
+
+
+def build_analysis_messages(document_text: str, file_name: str) -> list[dict[str, str]]:
+    """Assemble chat messages for the document-analysis endpoint.
+
+    Unlike `build_messages()`, there is no retrieved-chunks context block
+    here — the ENTIRE input is the uploaded document's own text (see
+    `templates.DOCUMENT_ANALYSIS_SYSTEM_PROMPT_UZ` for why "related laws"
+    is scoped to only what the document itself cites, not the model's
+    outside knowledge). Text longer than
+    `settings.max_document_analysis_chars` is truncated with a trailing
+    notice so the model — and the user reading its output — both know
+    the analysis only covers a prefix of the document, rather than
+    silently analyzing a cut-off document as if it were complete.
+    """
+    limit = settings.max_document_analysis_chars
+    truncated = len(document_text) > limit
+    text = document_text[:limit]
+    if truncated:
+        text += DOCUMENT_TRUNCATED_NOTICE_UZ
+
+    user_content = DOCUMENT_ANALYSIS_USER_TEMPLATE.format(file_name=file_name, document_text=text)
+    return [
+        {"role": "system", "content": DOCUMENT_ANALYSIS_SYSTEM_PROMPT_UZ},
         {"role": "user", "content": user_content},
     ]

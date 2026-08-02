@@ -73,8 +73,7 @@ GOLDEN_QUERIES: list[GoldenQuery] = [
     ),
     GoldenQuery(
         query=(
-            "Jinoyat sodir etgan shaxs necha yoshga toʻlgan boʻlishi kerak "
-            "javobgarlikka tortilishi uchun?"
+            "Jinoyat sodir etgan shaxs necha yoshga toʻlgan boʻlishi kerak " "javobgarlikka tortilishi uchun?"
         ),
         relevant=[(JINOYAT, "17")],
         note=(

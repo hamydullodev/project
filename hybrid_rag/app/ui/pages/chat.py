@@ -46,7 +46,7 @@ insurance for very little added surface area.
 
 from __future__ import annotations
 
-from typing import Iterator
+from collections.abc import Iterator
 
 import streamlit as st
 
@@ -110,9 +110,7 @@ def _render_history() -> None:
 
 
 def _handle_new_question(pipeline, user_input: str) -> None:
-    st.session_state[CHAT_HISTORY_KEY].append(
-        {"role": "user", "content": user_input, "sources": None}
-    )
+    st.session_state[CHAT_HISTORY_KEY].append({"role": "user", "content": user_input, "sources": None})
     with st.chat_message("user"):
         st.markdown(user_input)
 
@@ -124,7 +122,10 @@ def _handle_new_question(pipeline, user_input: str) -> None:
             st.session_state[CHAT_HISTORY_KEY].pop()  # remove the empty user turn
             return
 
-        answer_text = st.write_stream(_as_text_generator(stream))
+        # st.write_stream()'s return type is `str | list[Any]` since it also
+        # accepts generators yielding non-string chunks; `_as_text_generator`
+        # always yields plain str, so the result is always a str here.
+        answer_text = str(st.write_stream(_as_text_generator(stream)))
         sources = context.compression.kept
 
         if sources:
@@ -165,9 +166,8 @@ def _render_answer_actions(answer_text: str, key_prefix: str) -> None:
             mime="text/plain",
             key=f"download_{key_prefix}",
         )
-    with col2:
-        with st.expander("📋 Nusxalash uchun"):
-            st.code(answer_text, language=None)
+    with col2, st.expander("📋 Nusxalash uchun"):
+        st.code(answer_text, language=None)
 
 
 # See app/ui/pages/chat.py's original placeholder comment (now replaced

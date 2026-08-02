@@ -1,54 +1,50 @@
-# Qonun AI — frontend
+# UzLaw AI — frontend
 
-Next.js frontend for the Hybrid RAG Uzbek-law project. Talks to the
-FastAPI backend (`../api/`) over HTTP; the Streamlit app (`../app/ui/`)
-stays as the project's internal/debug tool (Index management, Retrieval
-Debug, Statistics) and is linked to directly from the navbar's Settings
-icon and the About dialog, not reimplemented here.
+Hybrid RAG o'zbek qonunchiligi loyihasining Next.js frontend qismi.
+FastAPI backend (`../api/`) bilan HTTP orqali muloqot qiladi; Streamlit
+ilova (`../app/ui/`) loyihaning ichki/diagnostika vositasi bo'lib
+qoladi (indeks boshqaruvi, qidiruv diagnostikasi, statistika) va
+navbar'dagi Sozlamalar belgisi hamda "Loyiha haqida" oynasidan
+to'g'ridan-to'g'ri havola qilinadi, bu yerda qayta yozilmaydi.
 
-## Setup
+## O'rnatish
 
 ```bash
 npm install
-cp .env.local.example .env.local   # adjust if either backend runs on a non-default port
+cp .env.local.example .env.local   # ikkala backend ham standart bo'lmagan portda ishlasa moslang
 npm run dev
 ```
 
-Requires the FastAPI backend running for anything beyond the current
-navbar/theme shell (`cd ../ && python run_api.py`, default
-`http://localhost:8000`), and the Streamlit debug tool running for the
-Settings/About links to resolve (`python run.py` from the project root,
-default `http://localhost:8501`).
+Joriy navbar/tema qobig'idan tashqari hamma narsa uchun FastAPI
+backend ishlab turishi kerak (`cd ../ && python run_api.py`, standart
+`http://localhost:8000`), Sozlamalar/"Loyiha haqida" havolalari
+ishlashi uchun esa Streamlit diagnostika vositasi ishlab turishi kerak
+(loyiha ildizidan `python run.py`, standart `http://localhost:8501`).
 
-## Stack
+## Texnologiyalar
 
 - **Next.js 16** (App Router, Turbopack) + **TypeScript**
-- **Tailwind CSS v4** (CSS-first config — see `src/app/globals.css`'s
-  `@theme inline` block, not a `tailwind.config.js`)
-- **shadcn/ui**, Base UI-backed (`@base-ui/react`) — composition uses a
-  `render` prop, not Radix's `asChild`; see
-  `node_modules/@base-ui/react/docs/react/handbook/composition.md` and
-  the comments in `src/components/navbar.tsx`/`theme-toggle.tsx` for
-  concrete examples.
-- **next-themes** for light/dark/system theming
-- **lucide-react** for icons (note: this major version dropped brand/logo
-  icons like GitHub's from its core set — see `navbar.tsx`'s comment)
+- **Tailwind CSS v4** (CSS-birinchi konfiguratsiya — qarang
+  `src/app/globals.css`dagi `@theme inline` bloki, `tailwind.config.js`
+  emas)
+- **shadcn/ui**, Base UI asosida (`@base-ui/react`) — kompozitsiya
+  `render` prop orqali, Radix'ning `asChild`i emas; qarang
+  `node_modules/@base-ui/react/docs/react/handbook/composition.md` va
+  `src/components/navbar.tsx`/`theme-toggle.tsx`dagi izohlarni aniq
+  misollar uchun
+- **next-themes** — och/qorong'i/tizim mavzulari uchun
+- **lucide-react** — belgilar uchun (eslatma: bu asosiy versiya
+  GitHub kabi brend/logotip belgilarini o'z yadrosidan olib
+  tashlagan — qarang `navbar.tsx`dagi izoh)
 
-## Project structure
+## Loyiha tuzilishi
 
 ```
 frontend/
 ├── src/
-│   ├── app/           # App Router pages, layout, global styles
-│   ├── components/     # Shared components (navbar, theme toggle, ...)
-│   │   └── ui/           # shadcn-generated primitives
-│   └── lib/            # config.ts (backend URLs), utils.ts (shadcn's cn())
+│   ├── app/           # App Router sahifalari, layout, global stillar
+│   ├── components/     # Umumiy komponentlar (navbar, tema tugmasi, ...)
+│   │   └── ui/           # shadcn tomonidan generatsiya qilingan primitivlar
+│   └── lib/            # config.ts (backend manzillari), utils.ts (shadcn'ning cn())
 └── .env.local.example
 ```
-
-## Milestones
-
-Built incrementally alongside the FastAPI backend — see the project
-root's conversation history / commit log for the milestone-by-milestone
-breakdown (scaffold → home/search → answer rendering → sources panel →
-history/sidebar → motion & polish).

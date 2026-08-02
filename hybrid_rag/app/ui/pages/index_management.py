@@ -78,7 +78,9 @@ def _render_current_status() -> None:
         with st.expander(f"📄 Hujjatlar roʻyxati ({len(documents)} ta)"):
             for doc in documents:
                 status_icon = {"indexed": "✅", "failed": "❌", "pending": "⏳"}.get(doc.status, "❓")
-                st.write(f"{status_icon} **{doc.file_name}** — {doc.num_chunks} ta boʻlak, {doc.law_name or '—'}")
+                st.write(
+                    f"{status_icon} **{doc.file_name}** — {doc.num_chunks} ta boʻlak, {doc.law_name or '—'}"
+                )
                 if doc.status == "failed" and doc.error_message:
                     st.caption(f"Xato: {doc.error_message}")
 
@@ -107,7 +109,9 @@ def _render_rebuild_section() -> None:
             st.session_state[CONFIRM_REBUILD_KEY] = True
             st.rerun()
     else:
-        st.warning("⚠️ Bu amal joriy indeksni oʻchirib, barcha hujjatlarni qaytadan qayta ishlaydi. Davom etasizmi?")
+        st.warning(
+            "⚠️ Bu amal joriy indeksni oʻchirib, barcha hujjatlarni qaytadan qayta ishlaydi. Davom etasizmi?"
+        )
         col1, col2 = st.columns(2)
         with col1:
             if st.button("✅ Ha, qayta qurish", type="primary"):
@@ -125,8 +129,7 @@ def _render_rebuild_section() -> None:
 def _render_delete_section() -> None:
     st.subheader("🗑️ Indeksni oʻchirish")
     st.caption(
-        "Barcha metama'lumotlar va vektorlarni oʻchiradi (manba hujjatlar "
-        "`documents/` papkasida qoladi)."
+        "Barcha metama'lumotlar va vektorlarni oʻchiradi (manba hujjatlar " "`documents/` papkasida qoladi)."
     )
 
     if not st.session_state.get(CONFIRM_DELETE_KEY, False):
@@ -134,7 +137,9 @@ def _render_delete_section() -> None:
             st.session_state[CONFIRM_DELETE_KEY] = True
             st.rerun()
     else:
-        st.error("⚠️ Bu amalni ortga qaytarib boʻlmaydi. Indeks va barcha metama'lumotlar oʻchiriladi. Davom etasizmi?")
+        st.error(
+            "⚠️ Bu amalni ortga qaytarib boʻlmaydi. Indeks va barcha metama'lumotlar oʻchiriladi. Davom etasizmi?"
+        )
         col1, col2 = st.columns(2)
         with col1:
             if st.button("✅ Ha, oʻchirish", type="primary"):

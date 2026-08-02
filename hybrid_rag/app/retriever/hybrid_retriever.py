@@ -108,8 +108,6 @@ BEST PRACTICES APPLIED
 
 from __future__ import annotations
 
-from typing import Optional
-
 from pydantic import BaseModel
 
 from app.config import settings
@@ -130,8 +128,8 @@ class HybridSearchResult(BaseModel):
     """
 
     chunk_id: str
-    dense_score: Optional[float] = None
-    sparse_score: Optional[float] = None
+    dense_score: float | None = None
+    sparse_score: float | None = None
     dense_score_normalized: float = 0.0
     sparse_score_normalized: float = 0.0
     combined_score: float = 0.0
@@ -162,8 +160,8 @@ class HybridRetriever:
         vector_store: FAISSVectorStore,
         bm25_index: BM25SparseIndex,
         embedding_model: EmbeddingModel,
-        dense_weight: Optional[float] = None,
-        sparse_weight: Optional[float] = None,
+        dense_weight: float | None = None,
+        sparse_weight: float | None = None,
     ) -> None:
         self.vector_store = vector_store
         self.bm25_index = bm25_index
@@ -171,7 +169,7 @@ class HybridRetriever:
         self.dense_weight = dense_weight if dense_weight is not None else settings.dense_weight
         self.sparse_weight = sparse_weight if sparse_weight is not None else settings.sparse_weight
 
-    def retrieve(self, query: str, top_k: Optional[int] = None) -> list[HybridSearchResult]:
+    def retrieve(self, query: str, top_k: int | None = None) -> list[HybridSearchResult]:
         """Return chunks ranked by fused dense+sparse relevance to `query`.
 
         `top_k` controls how many candidates are requested from EACH of

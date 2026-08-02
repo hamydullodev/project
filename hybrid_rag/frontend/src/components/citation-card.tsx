@@ -87,8 +87,12 @@ export function CitationCard({ source, index }: CitationCardProps) {
               <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-muted-foreground">{source.text}</p>
               <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground/80">
                 {source.page_number ? <span>Sahifa {source.page_number}</span> : null}
-                {source.dense_score != null ? <span>Zichlik: {Math.round(source.dense_score * 100)}%</span> : null}
-                {source.sparse_score != null ? <span>Siyrak: {Math.round(source.sparse_score * 100)}%</span> : null}
+                {source.dense_score_normalized != null ? (
+                  <span>Zichlik: {Math.round(source.dense_score_normalized * 100)}%</span>
+                ) : null}
+                {source.sparse_score_normalized != null ? (
+                  <span>Siyrak: {Math.round(source.sparse_score_normalized * 100)}%</span>
+                ) : null}
                 <span>Birlashgan: {Math.round(source.combined_score * 100)}%</span>
               </div>
             </div>

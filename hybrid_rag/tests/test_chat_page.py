@@ -34,7 +34,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 from streamlit.testing.v1 import AppTest
 
 CHAT_PAGE_PATH = str(Path(__file__).resolve().parent.parent / "app" / "ui" / "pages" / "chat.py")

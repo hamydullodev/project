@@ -132,7 +132,7 @@ BEST PRACTICES APPLIED
 
 from __future__ import annotations
 
-from typing import Iterator, Optional
+from collections.abc import Iterator
 
 from app.config import settings
 from app.llm.exceptions import LLMConnectionError, LLMError, LLMModelNotFoundError
@@ -141,7 +141,7 @@ from app.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-def list_available_models(base_url: Optional[str] = None) -> list[str]:
+def list_available_models(base_url: str | None = None) -> list[str]:
     """Return the tags of every model currently pulled in the local Ollama instance.
 
     A standalone helper (not tied to one `OllamaLLM` instance) since the
@@ -156,7 +156,7 @@ def list_available_models(base_url: Optional[str] = None) -> list[str]:
         response = client.list()
     except ConnectionError as e:
         raise LLMConnectionError(str(e)) from e
-    return [m.model for m in response.models]
+    return [m.model for m in response.models if m.model is not None]
 
 
 class OllamaLLM:
@@ -164,10 +164,10 @@ class OllamaLLM:
 
     def __init__(
         self,
-        model_name: Optional[str] = None,
-        base_url: Optional[str] = None,
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
+        model_name: str | None = None,
+        base_url: str | None = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
     ) -> None:
         import ollama
 
@@ -203,9 +203,7 @@ class OllamaLLM:
         import ollama
 
         try:
-            response = self._client.chat(
-                model=self.model_name, messages=messages, options=self._options()
-            )
+            response = self._client.chat(model=self.model_name, messages=messages, options=self._options())
         except ConnectionError as e:
             raise LLMConnectionError(str(e)) from e
         except ollama.ResponseError as e:
@@ -216,7 +214,7 @@ class OllamaLLM:
             self.model_name,
             getattr(response, "eval_count", "?"),
         )
-        return response.message.content
+        return response.message.content or ""
 
     def stream(self, messages: list[dict[str, str]]) -> Iterator[str]:
         """Generate an answer incrementally, yielding text chunks as produced.

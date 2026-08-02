@@ -150,9 +150,7 @@ def test_load_missing_files_raises_vector_store_error(tmp_path: Path):
         FAISSVectorStore.load(tmp_path / "does_not_exist")
 
 
-def test_load_corrupted_meta_json_raises_vector_store_error(
-    store: FAISSVectorStore, tmp_path: Path
-):
+def test_load_corrupted_meta_json_raises_vector_store_error(store: FAISSVectorStore, tmp_path: Path):
     store.add(["doc::001"], _unit_vectors(1))
     index_stem = tmp_path / "index"
     store.save(index_stem)
@@ -165,9 +163,7 @@ def test_load_corrupted_meta_json_raises_vector_store_error(
         FAISSVectorStore.load(index_stem)
 
 
-def test_load_inconsistent_dimension_raises_vector_store_error(
-    store: FAISSVectorStore, tmp_path: Path
-):
+def test_load_inconsistent_dimension_raises_vector_store_error(store: FAISSVectorStore, tmp_path: Path):
     import json
 
     store.add(["doc::001"], _unit_vectors(1))

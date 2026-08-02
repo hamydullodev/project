@@ -6,19 +6,13 @@ interface BrandMarkProps {
 }
 
 /**
- * The Qonun AI mark: one integrated glyph, not two emoji side by side.
- *
- * A rounded badge in the app's brand gradient (the same `--gradient-from`/
- * `--gradient-to` tokens every other gradient accent in this app uses, so
- * it always matches) contains a minimal scale-of-justice glyph drawn in
- * the Lucide icon style already used throughout the UI (round caps/joins,
- * ~2.2 stroke weight) so it reads as "part of the same design system,"
- * not an imported stock icon. Uzbekistan is folded in as a small
- * crescent-and-star detail resting above the beam (an abstraction of the
- * flag's crescent+twelve-stars, not a literal flag rectangle glued on)
- * rendered in the flag's blue/green, and a thin blue-to-green arc along
- * the badge's lower edge — a restrained nod, not a second logo competing
- * with the first.
+ * The UzLaw AI mark: a circular seal with the Uzbekistan flag (blue /
+ * white / green bands, red pinstripes, crescent + stars) filling the
+ * badge, and a scales-of-justice emblem — drawn as original line art,
+ * not traced from any stock asset — resting on a small ivory medallion
+ * in the center so it stays legible against all
+ * three flag colors behind it. Wordless by design (no "LAWYER"-style
+ * text baked into the mark) so it reads correctly at favicon size too.
  */
 export function BrandMark({ className, glow = false }: BrandMarkProps) {
   return (
@@ -26,59 +20,70 @@ export function BrandMark({ className, glow = false }: BrandMarkProps) {
       {glow ? (
         <span
           aria-hidden="true"
-          className="absolute inset-0 -z-10 scale-125 rounded-[28%] opacity-70 blur-xl"
+          className="absolute inset-0 -z-10 scale-125 rounded-full opacity-70 blur-xl"
           style={{
-            backgroundImage: "linear-gradient(135deg, var(--gradient-from), var(--gradient-to))",
+            backgroundImage: "linear-gradient(135deg, #1eb5e0, #22c55e)",
           }}
         />
       ) : null}
-      <svg viewBox="0 0 40 40" className="size-full" role="img" aria-label="Qonun AI">
+      <svg viewBox="0 0 40 40" className="size-full" role="img" aria-label="UzLaw AI">
         <defs>
-          <linearGradient id="brandBadge" x1="4" y1="2" x2="36" y2="38" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="var(--gradient-from)" />
-            <stop offset="100%" stopColor="var(--gradient-to)" />
-          </linearGradient>
-          <linearGradient id="brandFlagArc" x1="8" y1="34" x2="32" y2="34" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#1eb5e0" />
-            <stop offset="100%" stopColor="#22c55e" />
-          </linearGradient>
+          <clipPath id="brandCircleClip">
+            <circle cx="20" cy="20" r="19" />
+          </clipPath>
+          <radialGradient id="brandMedallion" cx="40%" cy="35%" r="70%">
+            <stop offset="0%" stopColor="#fffdf6" />
+            <stop offset="100%" stopColor="#f1ead8" />
+          </radialGradient>
         </defs>
 
-        <rect x="2" y="2" width="36" height="36" rx="10" fill="url(#brandBadge)" />
+        <g clipPath="url(#brandCircleClip)">
+          {/* Uzbekistan flag bands: blue / red / white / red / green */}
+          <rect x="0" y="0" width="40" height="15" fill="#1eb5e0" />
+          <rect x="0" y="15" width="40" height="1.6" fill="#ce1126" />
+          <rect x="0" y="16.6" width="40" height="6.8" fill="#ffffff" />
+          <rect x="0" y="23.4" width="40" height="1.6" fill="#ce1126" />
+          <rect x="0" y="25" width="40" height="15" fill="#0f9b4f" />
 
-        {/* Restrained Uzbekistan-blue-to-green arc along the lower edge */}
-        <path
-          d="M 9 33.5 Q 20 37.5 31 33.5"
-          fill="none"
-          stroke="url(#brandFlagArc)"
-          strokeWidth="2"
-          strokeLinecap="round"
-          opacity="0.9"
-        />
+          {/* Crescent + 12 stars, upper-left of the blue band, scaled down */}
+          <g transform="translate(3.5 2.5) scale(0.34)">
+            <path
+              d="M 15 4 A 9 9 0 1 1 14 22 A 6.8 6.8 0 1 0 15 4 Z"
+              fill="#ffffff"
+            />
+            <g fill="#ffffff">
+              <circle cx="27" cy="4" r="1.15" />
+              <circle cx="33.5" cy="4" r="1.15" />
+              <circle cx="40" cy="4" r="1.15" />
+              <circle cx="23.5" cy="10" r="1.15" />
+              <circle cx="30" cy="10" r="1.15" />
+              <circle cx="36.5" cy="10" r="1.15" />
+              <circle cx="43" cy="10" r="1.15" />
+              <circle cx="19" cy="16" r="1.15" />
+              <circle cx="25.5" cy="16" r="1.15" />
+              <circle cx="32" cy="16" r="1.15" />
+              <circle cx="38.5" cy="16" r="1.15" />
+              <circle cx="45" cy="16" r="1.15" />
+            </g>
+          </g>
 
-        {/* Scale of justice, drawn in the app's own icon style */}
-        <g fill="none" stroke="#ffffff" strokeWidth="2.15" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="20" cy="10.4" r="1.35" fill="#ffffff" stroke="none" />
-          <line x1="20" y1="11.9" x2="20" y2="25.5" />
-          <line x1="11.5" y1="14.4" x2="28.5" y2="14.4" />
-          <line x1="11.5" y1="14.4" x2="11.5" y2="19.4" />
-          <line x1="28.5" y1="14.4" x2="28.5" y2="19.4" />
-          <path d="M 8 19.4 Q 11.5 23.4 15 19.4" />
-          <path d="M 25 19.4 Q 28.5 23.4 32 19.4" />
-          <path d="M 20 25.5 L 15.2 30.2 L 24.8 30.2 Z" />
-          <line x1="14" y1="30.6" x2="26" y2="30.6" strokeWidth="2.4" />
+          <circle cx="20" cy="20" r="19" fill="none" stroke="#00000022" strokeWidth="0.5" />
         </g>
 
-        {/* Crescent + star, resting above the beam */}
-        <g>
-          <path
-            d="M 24.6 7.3 A 3.1 3.1 0 1 1 24.1 6.1 A 2.35 2.35 0 1 0 24.6 7.3 Z"
-            fill="#eafff3"
-          />
-          <path
-            d="M 27.3 6.6 L 27.75 7.55 L 28.75 7.7 L 28 8.4 L 28.2 9.4 L 27.3 8.9 L 26.4 9.4 L 26.6 8.4 L 25.85 7.7 L 26.85 7.55 Z"
-            fill="#eafff3"
-          />
+        {/* Ivory medallion carrying the emblem, so it reads against every flag color behind it */}
+        <circle cx="20" cy="21" r="12.5" fill="url(#brandMedallion)" stroke="#ffffff" strokeWidth="0.6" />
+
+        {/* Scales of justice, centered on the medallion */}
+        <g fill="none" stroke="#1c2b4a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="20" cy="12.4" r="1" fill="#1c2b4a" stroke="none" />
+          <line x1="20" y1="13.4" x2="20" y2="27.5" />
+          <line x1="13.5" y1="15.8" x2="26.5" y2="15.8" />
+          <line x1="13.5" y1="15.8" x2="13.5" y2="19.8" />
+          <line x1="26.5" y1="15.8" x2="26.5" y2="19.8" />
+          <path d="M 11 19.8 Q 13.5 22.9 16 19.8" />
+          <path d="M 24 19.8 Q 26.5 22.9 29 19.8" />
+          <path d="M 20 27.5 L 16.3 30.9 L 23.7 30.9 Z" />
+          <line x1="15.3" y1="31.2" x2="24.7" y2="31.2" strokeWidth="1.7" />
         </g>
       </svg>
     </span>

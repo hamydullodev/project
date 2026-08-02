@@ -108,7 +108,9 @@ class TestNdcgAtK:
         `y_true`'s own 1s, with no separate "some relevant items were
         never retrieved at all" concept) - true for every case above.
         """
-        assert total_relevant == sum(flags), "fixture must include every relevant item for a fair sklearn comparison"
+        assert total_relevant == sum(
+            flags
+        ), "fixture must include every relevant item for a fair sklearn comparison"
 
         y_true = np.array([[1 if f else 0 for f in flags]])
         y_score = np.array([[len(flags) - i for i in range(len(flags))]])  # strictly descending

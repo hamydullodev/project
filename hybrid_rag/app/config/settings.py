@@ -102,6 +102,14 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    # -- LLM provider selection ------------------------------------------------
+    # "ollama" (fully local) or "gemini" (Google's hosted API — better answer
+    # quality than this project's small local default model, at the cost of
+    # requiring network access and an API key). Everything downstream
+    # (`app/rag/pipeline.py`) talks to whichever provider is configured
+    # through the same generate()/stream() interface — see app/llm/__init__.py.
+    llm_provider: Literal["ollama", "gemini"] = "ollama"
+
     # -- Local LLM (Ollama) --------------------------------------------------
     llm_model: str = Field(
         default="llama3.2:3b",
@@ -110,7 +118,21 @@ class Settings(BaseSettings):
     )
     ollama_base_url: str = Field(default="http://localhost:11434")
     llm_temperature: float = Field(default=0.1, ge=0.0, le=2.0)
-    llm_max_tokens: int = Field(default=1024, gt=0)
+    llm_max_tokens: int = Field(
+        default=4096,
+        gt=0,
+        description="Output token budget for /api/ask answers. Some hosted models (e.g. "
+        "Gemini's 'thinking' models) count internal reasoning tokens against this same "
+        "budget — too low a value can silently truncate an answer to empty/partial text "
+        "with finish_reason=MAX_TOKENS before any visible output is produced, which is why "
+        "this default is higher than a plain-text answer alone would need.",
+    )
+
+    # -- Gemini (hosted LLM, used when llm_provider="gemini") ----------------
+    gemini_api_key: str | None = Field(
+        default=None, description="Google AI Studio API key. Required when LLM_PROVIDER=gemini."
+    )
+    gemini_model: str = Field(default="gemini-flash-latest")
 
     # -- Embedding model (dense retrieval) -----------------------------------
     # Defaults to a small (~470MB) multilingual model rather than the
@@ -150,10 +172,38 @@ class Settings(BaseSettings):
     )
     dense_weight: float = Field(default=0.5, ge=0.0, le=1.0)
     sparse_weight: float = Field(default=0.5, ge=0.0, le=1.0)
+    retrieval_filter_oversample: int = Field(
+        default=4,
+        gt=0,
+        description="When a query is scoped to specific collection_ids, retrieve "
+        "TOP_K * this factor candidates from each of dense/sparse BEFORE filtering "
+        "to the requested collections, so post-filtering still leaves enough "
+        "candidates for reranking instead of starving on a narrow collection.",
+    )
 
     # -- Query preprocessing & context compression ---------------------------------
     max_query_length: int = Field(
         default=1000, gt=0, description="Queries longer than this (characters) are truncated with a warning."
+    )
+    document_analysis_max_tokens: int = Field(
+        default=8192,
+        gt=0,
+        description="Output token budget for the document-analysis endpoint, distinct from "
+        "LLM_MAX_TOKENS (used by /api/ask). Needs to be much larger: an 8-section structured "
+        "analysis is long, and some hosted models (e.g. Gemini's 'thinking' models) count "
+        "internal reasoning tokens against this same budget, silently truncating output at "
+        "LLM_MAX_TOKENS' smaller default before any visible text is produced.",
+    )
+    max_document_analysis_chars: int = Field(
+        default=40000,
+        gt=0,
+        description="Character budget for a single uploaded document's text sent to the "
+        "document-analysis LLM call; longer documents are truncated with a trailing notice.",
+    )
+    max_upload_size_bytes: int = Field(
+        default=15_000_000,
+        gt=0,
+        description="Maximum accepted size (bytes) for a document-analysis upload.",
     )
     max_context_chars: int = Field(
         default=6000,
@@ -189,7 +239,7 @@ class Settings(BaseSettings):
         return v
 
     @model_validator(mode="after")
-    def _weights_sum_to_one(self) -> "Settings":
+    def _weights_sum_to_one(self) -> Settings:
         total = self.dense_weight + self.sparse_weight
         if abs(total - 1.0) > 1e-6:
             raise ValueError(f"dense_weight + sparse_weight must equal 1.0, got {total}")

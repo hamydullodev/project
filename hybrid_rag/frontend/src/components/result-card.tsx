@@ -22,6 +22,7 @@ import { BrandMark } from "@/components/brand-mark";
 import { RetrievalStepper } from "@/components/retrieval-stepper";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useSavedAnswers } from "@/hooks/use-saved-answers";
+import { copyToClipboard } from "@/lib/clipboard";
 import { confidenceInfo, formatDuration, readingTimeMinutes } from "@/lib/format";
 import { spawnRipple } from "@/lib/ripple";
 import type { AskStatus, Source } from "@/lib/types";
@@ -133,9 +134,10 @@ export function ResultCard({
   const responseTime = isDone && askedAt && doneAt ? formatDuration(doneAt - askedAt) : null;
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(answer);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
+    if (await copyToClipboard(answer)) {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    }
   }
 
   async function handleShare() {
@@ -143,15 +145,16 @@ export function ResultCard({
     url.searchParams.set("q", query);
     if (navigator.share) {
       try {
-        await navigator.share({ title: "Qonun AI", text: query, url: url.toString() });
+        await navigator.share({ title: "UzLaw AI", text: query, url: url.toString() });
       } catch {
         // user dismissed the native share sheet — nothing to do
       }
       return;
     }
-    await navigator.clipboard.writeText(url.toString());
-    setShared(true);
-    window.setTimeout(() => setShared(false), 1500);
+    if (await copyToClipboard(url.toString())) {
+      setShared(true);
+      window.setTimeout(() => setShared(false), 1500);
+    }
   }
 
   function handleSaveToggle() {
@@ -171,7 +174,7 @@ export function ResultCard({
     >
       <div className="mb-3 flex items-center gap-2">
         <BrandMark className="size-5" />
-        <span className="text-xs font-medium text-muted-foreground">Qonun AI</span>
+        <span className="text-xs font-medium text-muted-foreground">UzLaw AI</span>
       </div>
 
       <AnimatePresence mode="wait" initial={false}>

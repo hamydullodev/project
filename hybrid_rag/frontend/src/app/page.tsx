@@ -4,10 +4,12 @@ import * as React from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { BrandMark } from "@/components/brand-mark";
+import { DocumentAnalysisCard } from "@/components/document-analysis-card";
 import { ResultCard } from "@/components/result-card";
 import { SearchBox } from "@/components/search-box";
 import { SourcesPanel } from "@/components/sources-panel";
 import { SuggestionChips } from "@/components/suggestion-chips";
+import { useAnalyze } from "@/hooks/use-analyze";
 import { useAsk } from "@/hooks/use-ask";
 import { cn } from "@/lib/utils";
 
@@ -49,14 +51,35 @@ function AmbientBackground({ reduceMotion }: { reduceMotion: boolean | null }) {
  */
 export default function Home() {
   const [query, setQuery] = React.useState("");
+  const [attachedFile, setAttachedFile] = React.useState<File | null>(null);
   const { status, answer, sources, answerFound, errorMessage, askedAt, doneAt, ask } = useAsk();
+  const analysis = useAnalyze();
   const reduceMotion = useReducedMotion();
-  const isActive = status !== "idle";
+  // Whichever flow (corpus Q&A vs. single-document analysis) was most
+  // recently submitted drives the active view — only one runs at a time
+  // (submitting one doesn't cancel the other's request, but the UI only
+  // ever shows one result surface, matching "one question/document at a
+  // time" being the whole product's interaction model).
+  const [mode, setMode] = React.useState<"ask" | "analyze" | null>(null);
+  const isActive = mode === "ask" ? status !== "idle" : mode === "analyze" ? analysis.status !== "idle" : false;
   const hasAutoAsked = React.useRef(false);
 
   function handleAsk(value: string) {
     setQuery(value);
+    setMode("ask");
     ask(value);
+  }
+
+  function handleSubmit(value: string) {
+    if (attachedFile) {
+      const file = attachedFile;
+      setQuery(value);
+      setAttachedFile(null);
+      setMode("analyze");
+      analysis.analyze(file);
+      return;
+    }
+    handleAsk(value);
   }
 
   // A shared link (result-card.tsx's Share action appends `?q=`) reopens
@@ -81,12 +104,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div
-      className={cn(
-        "relative flex w-full flex-1 flex-col items-center px-4",
-        isActive ? "pt-10 pb-16" : "justify-center py-10",
-      )}
-    >
+    <div className="relative flex w-full flex-1 flex-col items-center px-4 pt-10 pb-16">
       {!isActive ? <AmbientBackground reduceMotion={reduceMotion} /> : null}
 
       <motion.div layout className={cn("w-full", isActive ? "max-w-5xl" : "max-w-2xl")}>
@@ -101,10 +119,10 @@ export default function Home() {
               className="mb-8 flex flex-col items-center gap-3 text-center"
             >
               <motion.div variants={ITEM_VARIANTS}>
-                <BrandMark className="size-16" glow />
+                <BrandMark className="size-16" />
               </motion.div>
               <motion.h1 variants={ITEM_VARIANTS} className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                Qonun AI
+                UzLaw AI
               </motion.h1>
               <motion.p variants={ITEM_VARIANTS} className="max-w-md text-sm text-muted-foreground sm:text-base">
                 Oʻzbekiston Respublikasi qonun hujjatlari asosida savollaringizga javob beruvchi
@@ -116,13 +134,32 @@ export default function Home() {
 
         <motion.div
           layout
-          className={cn(isActive ? "grid items-start gap-6 md:grid-cols-[1fr_320px] xl:grid-cols-[1fr_380px]" : undefined)}
+          className={cn(
+            isActive && mode === "ask" && "grid items-start gap-6 md:grid-cols-[1fr_320px] xl:grid-cols-[1fr_380px]",
+          )}
         >
           <div className={cn(!isActive && "mx-auto w-full max-w-2xl")}>
-            <SearchBox value={query} onValueChange={setQuery} onSubmit={handleAsk} loading={status === "loading"} />
+            <SearchBox
+              value={query}
+              onValueChange={setQuery}
+              onSubmit={handleSubmit}
+              loading={mode === "analyze" ? analysis.status === "loading" : status === "loading"}
+              attachedFile={attachedFile}
+              onAttachFile={setAttachedFile}
+            />
 
             {!isActive ? (
               <SuggestionChips onSelect={handleAsk} className="mt-5" />
+            ) : mode === "analyze" ? (
+              <DocumentAnalysisCard
+                status={analysis.status}
+                info={analysis.info}
+                answer={analysis.answer}
+                errorMessage={analysis.errorMessage}
+                askedAt={analysis.askedAt}
+                doneAt={analysis.doneAt}
+                className="mt-6"
+              />
             ) : (
               <ResultCard
                 status={status}
@@ -138,7 +175,7 @@ export default function Home() {
             )}
           </div>
 
-          {isActive ? <SourcesPanel sources={sources} className="md:sticky md:top-20" /> : null}
+          {isActive && mode === "ask" ? <SourcesPanel sources={sources} className="md:sticky md:top-20" /> : null}
         </motion.div>
       </motion.div>
     </div>

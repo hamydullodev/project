@@ -51,9 +51,7 @@ def test_relevant_text_scores_higher_than_irrelevant(reranker: RerankerModel):
         ),
     }
 
-    results = reranker.rerank(
-        "Mehnat shartnomasini qanday bekor qilish mumkin?", candidates, chunks, top_k=2
-    )
+    results = reranker.rerank("Mehnat shartnomasini qanday bekor qilish mumkin?", candidates, chunks, top_k=2)
 
     assert results[0].chunk_id == "relevant"
     assert results[0].reranker_score > results[1].reranker_score

@@ -119,7 +119,6 @@ ALTERNATIVES CONSIDERED
 from __future__ import annotations
 
 import re
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -157,12 +156,9 @@ BOB_PATTERN = re.compile(r"^(\d+|[IVXLCDM]+)[-\s]*[Bb][Oo][Bb]\.?[ \t]*(.*)$")
 
 # "I BOʻLIM" / "I BOʻLIM. Title" / "BIRINCHI BOʻLIM".
 _ORDINAL_WORDS = (
-    "Birinchi|Ikkinchi|Uchinchi|Toʻrtinchi|Beshinchi|Oltinchi|"
-    "Yettinchi|Sakkizinchi|Toʻqqizinchi|Oʻninchi"
+    "Birinchi|Ikkinchi|Uchinchi|Toʻrtinchi|Beshinchi|Oltinchi|" "Yettinchi|Sakkizinchi|Toʻqqizinchi|Oʻninchi"
 )
-BOLIM_PATTERN = re.compile(
-    rf"^([IVXLCDM]+|{_ORDINAL_WORDS})\s+BO[ʻ]LIM\.?[ \t]*(.*)$", re.IGNORECASE
-)
+BOLIM_PATTERN = re.compile(rf"^([IVXLCDM]+|{_ORDINAL_WORDS})\s+BO[ʻ]LIM\.?[ \t]*(.*)$", re.IGNORECASE)
 
 # "1-Kichik boʻlim" (sub-section).
 KICHIK_BOLIM_PATTERN = re.compile(r"^(\d+)-Kichik bo[ʻ]lim\.?[ \t]*(.*)$", re.IGNORECASE)
@@ -206,13 +202,13 @@ class ParsedArticle(BaseModel):
     which source page the article started on for paginated formats (PDF).
     """
 
-    article_number: Optional[str]
-    section: Optional[str]
+    article_number: str | None
+    section: str | None
     text: str
     start_offset: int = 0
 
 
-def _section_breadcrumb(major_section: Optional[str], chapter: Optional[str]) -> Optional[str]:
+def _section_breadcrumb(major_section: str | None, chapter: str | None) -> str | None:
     parts = [p for p in (major_section, chapter) if p]
     return " > ".join(parts) if parts else None
 
@@ -245,11 +241,11 @@ def parse_legal_structure(text: str) -> list[ParsedArticle]:
         line_offsets[idx + 1] = line_offsets[idx] + len(lines[idx]) + 1
 
     articles: list[ParsedArticle] = []
-    major_section: Optional[str] = None
-    chapter: Optional[str] = None
+    major_section: str | None = None
+    chapter: str | None = None
 
-    current_number: Optional[str] = None
-    current_section: Optional[str] = None
+    current_number: str | None = None
+    current_section: str | None = None
     current_lines: list[str] = []
     current_start_offset = 0
 
@@ -370,7 +366,7 @@ def deduplicate_articles(articles: list[ParsedArticle]) -> list[ParsedArticle]:
     while building the result list — O(n) time, O(n) memory for the set
     of seen keys.
     """
-    seen: set[tuple[Optional[str], str]] = set()
+    seen: set[tuple[str | None, str]] = set()
     deduped: list[ParsedArticle] = []
     dropped = 0
 
@@ -384,8 +380,7 @@ def deduplicate_articles(articles: list[ParsedArticle]) -> list[ParsedArticle]:
 
     if dropped:
         logger.warning(
-            "Dropped %d duplicate article(s) (identical article number + text) "
-            "out of %d parsed",
+            "Dropped %d duplicate article(s) (identical article number + text) " "out of %d parsed",
             dropped,
             len(articles),
         )

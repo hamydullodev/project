@@ -67,10 +67,12 @@ class _StubPipeline:
     def __init__(self, tokens: list[str]):
         self._tokens = tokens
 
-    def retrieve(self, raw_query: str) -> RetrievalContext:
+    def retrieve(self, raw_query: str, collection_ids: list[str] | None = None) -> RetrievalContext:
         from app.rag import preprocess_query
 
-        cleaned = preprocess_query(raw_query)  # raises EmptyQueryError for blank input, like the real pipeline
+        cleaned = preprocess_query(
+            raw_query
+        )  # raises EmptyQueryError for blank input, like the real pipeline
         return _fake_context(query=cleaned)
 
     def stream_from_context(self, context: RetrievalContext):
@@ -83,8 +85,8 @@ def _parse_sse(body: str) -> list[tuple[str, dict]]:
         if not block.strip():
             continue
         lines = block.splitlines()
-        event = next(l.split(": ", 1)[1] for l in lines if l.startswith("event: "))
-        data = next(l.split(": ", 1)[1] for l in lines if l.startswith("data: "))
+        event = next(line.split(": ", 1)[1] for line in lines if line.startswith("event: "))
+        data = next(line.split(": ", 1)[1] for line in lines if line.startswith("data: "))
         events.append((event, json.loads(data)))
     return events
 
@@ -209,3 +211,19 @@ def test_ask_end_to_end_with_real_pipeline():
     assert events[-1][0] == "done"
     token_text = "".join(data["text"] for name, data in events if name == "token")
     assert token_text.strip()
+
+
+def test_list_collections_returns_real_indexed_collections():
+    """`GET /api/collections` reads straight from MetadataRepository (no
+    pipeline dependency), so this exercises the real, already-indexed
+    corpus without needing Ollama/Gemini/an embedding model at all.
+    """
+    response = client.get("/api/collections")
+    assert response.status_code == 200
+
+    collections = response.json()
+    assert isinstance(collections, list)
+    assert len(collections) > 0
+    first = collections[0]
+    assert {"collection_id", "category", "title", "num_documents", "num_chunks"} <= first.keys()
+    assert all(c["num_chunks"] > 0 for c in collections)

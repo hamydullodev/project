@@ -142,7 +142,7 @@ def normalize_uzbek_apostrophes(text: str) -> str:
     See `UZBEK_APOSTROPHE_SUBSTITUTES` and the module docstring for the
     linguistic reasoning and its limitations.
     """
-    return text.translate(str.maketrans(UZBEK_APOSTROPHE_SUBSTITUTES))
+    return text.translate(str.maketrans(UZBEK_APOSTROPHE_SUBSTITUTES))  # type: ignore[arg-type]  # str->str dict is valid at runtime; typeshed's dict invariance just can't express it
 
 
 def remove_invisible_characters(text: str) -> str:
@@ -158,9 +158,7 @@ def remove_control_characters(text: str) -> str:
     than \\n/\\t are artifacts (e.g. stray \\x00 bytes from a corrupted
     extraction) rather than real content.
     """
-    return "".join(
-        ch for ch in text if ch in _CONTROL_CHARS_KEEP or unicodedata.category(ch) != "Cc"
-    )
+    return "".join(ch for ch in text if ch in _CONTROL_CHARS_KEEP or unicodedata.category(ch) != "Cc")
 
 
 def collapse_whitespace(text: str) -> str:

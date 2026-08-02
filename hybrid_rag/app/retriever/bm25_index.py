@@ -124,7 +124,6 @@ from __future__ import annotations
 import pickle
 import tempfile
 from pathlib import Path
-from typing import Optional
 
 from app.config import settings
 from app.retriever.tokenizer import tokenize
@@ -145,7 +144,7 @@ class BM25SparseIndex:
     class's docstring.
     """
 
-    def __init__(self, path: Optional[Path] = None) -> None:
+    def __init__(self, path: Path | None = None) -> None:
         self.path = path
         self._bm25 = None
         self._chunk_ids: list[str] = []
@@ -168,9 +167,7 @@ class BM25SparseIndex:
         call this with ALL current chunks, not just newly-added ones.
         """
         if len(chunk_ids) != len(texts):
-            raise ValueError(
-                f"chunk_ids length ({len(chunk_ids)}) must match texts length ({len(texts)})"
-            )
+            raise ValueError(f"chunk_ids length ({len(chunk_ids)}) must match texts length ({len(texts)})")
 
         if not chunk_ids:
             self._bm25 = None
@@ -209,7 +206,7 @@ class BM25SparseIndex:
         if not query_tokens:
             return []
 
-        scores = self._bm25.get_scores(query_tokens)
+        scores = self._bm25.get_scores(query_tokens)  # type: ignore[attr-defined]  # _bm25 is None only pre-build/on empty corpus; both return [] above before reaching here
 
         # argsort ascending, then take the top_k largest — avoids a full
         # O(n log n) sort when top_k is much smaller than the corpus, via
@@ -227,15 +224,11 @@ class BM25SparseIndex:
         # Excluding these keeps the hybrid retriever's candidate pool
         # free of results BM25 itself considers non-evidence, rather than
         # padding it with arbitrary "least-bad" noise just to reach top_k.
-        return [
-            (self._chunk_ids[i], float(scores[i]))
-            for i in top_indices
-            if scores[i] > 0
-        ]
+        return [(self._chunk_ids[i], float(scores[i])) for i in top_indices if scores[i] > 0]
 
     # -- persistence --------------------------------------------------------------
 
-    def save(self, path: Optional[Path] = None) -> None:
+    def save(self, path: Path | None = None) -> None:
         """Persist the BM25 index to disk via pickle.
 
         Writes to a temporary file and renames into place (same rationale
@@ -248,9 +241,7 @@ class BM25SparseIndex:
 
         payload = {"bm25": self._bm25, "chunk_ids": self._chunk_ids}
 
-        with tempfile.NamedTemporaryFile(
-            dir=index_path.parent, suffix=".pkl.tmp", delete=False
-        ) as tmp_file:
+        with tempfile.NamedTemporaryFile(dir=index_path.parent, suffix=".pkl.tmp", delete=False) as tmp_file:
             pickle.dump(payload, tmp_file)
             tmp_path = Path(tmp_file.name)
 
@@ -259,7 +250,7 @@ class BM25SparseIndex:
         logger.info("Saved BM25 index (%d chunks) to %s", len(self), index_path)
 
     @classmethod
-    def load(cls, path: Optional[Path] = None) -> "BM25SparseIndex":
+    def load(cls, path: Path | None = None) -> BM25SparseIndex:
         """Load a previously-saved BM25 index from disk.
 
         Raises `BM25IndexError` (not a raw pickle/OSError) on a missing
@@ -296,8 +287,8 @@ class BM25SparseIndex:
         return store
 
     @staticmethod
-    def _resolve_path_static(path: Optional[Path]) -> Path:
+    def _resolve_path_static(path: Path | None) -> Path:
         return path or settings.bm25_path_resolved
 
-    def _resolve_path(self, path: Optional[Path]) -> Path:
+    def _resolve_path(self, path: Path | None) -> Path:
         return self._resolve_path_static(path or self.path)

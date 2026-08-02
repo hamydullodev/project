@@ -32,11 +32,12 @@ serves for the Streamlit UI's tests.
 
 from __future__ import annotations
 
-from typing import Optional
-
+from app.config import settings
+from app.llm import GeminiLLM, OllamaLLM, get_llm
 from app.rag import RAGPipeline
 
-_pipeline: Optional[RAGPipeline] = None
+_pipeline: RAGPipeline | None = None
+_llm: OllamaLLM | GeminiLLM | None = None
 
 
 def get_pipeline() -> RAGPipeline:
@@ -51,3 +52,29 @@ def reset_pipeline_cache() -> None:
     """Force the next `get_pipeline()` call to construct a fresh instance. Test-only."""
     global _pipeline
     _pipeline = None
+
+
+def get_llm_cached() -> OllamaLLM | GeminiLLM:
+    """Return the shared LLM client for the document-analysis endpoint.
+
+    A separate cache from `get_pipeline()` — the analyze endpoint (no
+    retrieval involved) shouldn't pay for loading the embedding model and
+    reranker `RAGPipeline()` eagerly constructs, just to reach the LLM
+    client. Same lazy-singleton, don't-cache-failure pattern as
+    `get_pipeline()` above (see its docstring for why).
+
+    Uses `settings.document_analysis_max_tokens` (larger than `/api/ask`'s
+    `LLM_MAX_TOKENS`) since this client is ONLY ever used for document
+    analysis, never for `/api/ask` (which gets its own LLM instance,
+    default-sized, from inside `RAGPipeline.__init__`).
+    """
+    global _llm
+    if _llm is None:
+        _llm = get_llm(max_tokens=settings.document_analysis_max_tokens)
+    return _llm
+
+
+def reset_llm_cache() -> None:
+    """Force the next `get_llm_cached()` call to construct a fresh instance. Test-only."""
+    global _llm
+    _llm = None

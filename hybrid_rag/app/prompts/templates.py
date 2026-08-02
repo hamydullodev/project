@@ -94,3 +94,44 @@ Yuqoridagi manbalarga asoslanib, savolga javob bering. Har bir faktni qaysi qonu
 # omitted entirely by the builder rather than shown as "None" - see
 # builder.py's _format_source.
 SOURCE_HEADER_TEMPLATE = "--- Manba {index} ---"
+
+
+# --------------------------------------------------------------------------
+# Document analysis ("+" upload button) — a SEPARATE prompt from the
+# corpus Q&A one above. This one has no retrieved MANBALAR block at all;
+# the only input is the uploaded document's own text, so the grounding
+# rule is different in kind: not "only use the retrieved chunks" but
+# "only use what this document itself says or cites" — an ungrounded
+# "related laws" section here would be exactly the kind of fabrication
+# the rest of this project refuses to produce.
+# --------------------------------------------------------------------------
+
+DOCUMENT_ANALYSIS_SYSTEM_PROMPT_UZ = """Siz Oʻzbekiston Respublikasi qonunchiligi boʻyicha ishonchli yuridik yordamchisiz. Foydalanuvchi bitta hujjatni yukladi — sizning vazifangiz shu hujjatni tahlil qilish.
+
+Qat'iy qoidalar:
+1. Faqat quyida taqdim etilgan hujjat matnidagi maʼlumotlardan foydalaning. Hujjatda yoʻq hech qanday faktni oʻylab topmang.
+2. "Hujjatda tilga olingan qonun va moddalar" boʻlimida FAQAT hujjat matnining oʻzida aniq zikr etilgan qonun/modda nomlarini keltiring. Agar hujjat biror qonunga havola qilmagan boʻlsa, bu boʻlimni boʻsh qoldiring yoki "Hujjatda aniq qonunga havola yoʻq" deb yozing — oʻzingizning umumiy bilimingizdan tegishli qonunlarni oʻylab topib qoʻshmang.
+3. Agar hujjat matni to'liq o'qib bo'lmagan yoki juda qisqa/tushunarsiz boʻlsa, buni ochiq ayting, mavjud boʻlmagan tafsilotlarni to'ldirmang.
+4. Javobingizni aniq, tushunarli oʻzbek tilida, professional uslubda, quyidagi boʻlimlar bilan tuzing (Markdown sarlavhalari bilan):
+
+## Qisqacha xulosa
+## Huquqlar
+## Majburiyatlar
+## Muddatlar
+## Zarur harakatlar
+## Hujjatda tilga olingan qonun va moddalar
+## Ehtimoliy huquqiy oqibatlar
+## Yetishmayotgan yoki noaniq maʼlumotlar
+
+Har bir boʻlimda hujjatga tegishli boʻlmagan narsa uchun "Hujjatda topilmadi" deb yozing — boʻlimni oʻylab topilgan matn bilan toʻldirmang."""
+
+DOCUMENT_ANALYSIS_USER_TEMPLATE = """HUJJAT ({file_name}):
+
+{document_text}
+
+Yuqoridagi hujjatni tahlil qiling."""
+
+DOCUMENT_TRUNCATED_NOTICE_UZ = (
+    "\n\n[Eslatma: hujjat juda uzun boʻlgani uchun matn qisqartirildi; "
+    "tahlil faqat yuqoridagi qismga asoslangan.]"
+)

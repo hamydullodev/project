@@ -25,8 +25,8 @@ conversion without hand-writing `asdict()`-style boilerplate.
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime, timezone
-from typing import Literal, Optional
+from datetime import UTC, datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -40,7 +40,7 @@ def utc_now_iso() -> str:
     unambiguous format — always UTC, so there's no timezone-offset bugs
     when comparing timestamps written from different machines.
     """
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class DocumentRecord(BaseModel):
@@ -50,17 +50,20 @@ class DocumentRecord(BaseModel):
     file_name: str
     file_path: str
     file_type: str  # "pdf" | "docx" | "txt" | "html"
-    law_name: Optional[str] = None
+    law_name: str | None = None
+    collection_id: str | None = None
+    collection_category: str | None = None
+    collection_title: str | None = None
     file_hash: str
     file_size_bytes: int
     num_chunks: int = 0
     status: DocumentStatus = "pending"
-    error_message: Optional[str] = None
+    error_message: str | None = None
     created_at: str = Field(default_factory=utc_now_iso)
     updated_at: str = Field(default_factory=utc_now_iso)
 
     @classmethod
-    def from_row(cls, row: sqlite3.Row) -> "DocumentRecord":
+    def from_row(cls, row: sqlite3.Row) -> DocumentRecord:
         return cls(**dict(row))
 
 
@@ -79,14 +82,17 @@ class ChunkRecord(BaseModel):
     chunk_index: int
     text: str
     char_count: int
-    law_name: Optional[str] = None
-    article_number: Optional[str] = None
-    section: Optional[str] = None
-    page_number: Optional[int] = None
+    law_name: str | None = None
+    collection_id: str | None = None
+    collection_category: str | None = None
+    collection_title: str | None = None
+    article_number: str | None = None
+    section: str | None = None
+    page_number: int | None = None
     created_at: str = Field(default_factory=utc_now_iso)
 
     @classmethod
-    def from_row(cls, row: sqlite3.Row) -> "ChunkRecord":
+    def from_row(cls, row: sqlite3.Row) -> ChunkRecord:
         return cls(**dict(row))
 
     @staticmethod

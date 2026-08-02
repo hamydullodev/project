@@ -167,3 +167,83 @@ def test_delete_all_wipes_everything(repo: MetadataRepository):
 
     assert repo.count_documents() == 0
     assert repo.count_chunks() == 0
+
+
+def test_collection_fields_round_trip(repo: MetadataRepository):
+    doc = _make_document()
+    doc.collection_id = "fuqarolik_kodeksi"
+    doc.collection_category = "kodekslar"
+    doc.collection_title = "Fuqarolik kodeksi"
+    repo.upsert_document(doc)
+
+    chunk = ChunkRecord(
+        id=ChunkRecord.make_id("doc-1", 0),
+        document_id="doc-1",
+        chunk_index=0,
+        text="1-modda.",
+        char_count=8,
+        collection_id="fuqarolik_kodeksi",
+        collection_category="kodekslar",
+        collection_title="Fuqarolik kodeksi",
+    )
+    repo.replace_chunks("doc-1", [chunk])
+
+    fetched_doc = repo.get_document("doc-1")
+    assert fetched_doc.collection_id == "fuqarolik_kodeksi"
+    fetched_chunk = repo.get_chunk(chunk.id)
+    assert fetched_chunk.collection_id == "fuqarolik_kodeksi"
+    assert fetched_chunk.collection_category == "kodekslar"
+
+
+def test_init_schema_migrates_pre_existing_table_missing_collection_columns(tmp_path: Path):
+    """Simulates a database created before collection_id/category/title
+    existed: a hand-built `documents`/`chunks` pair with none of the new
+    columns. `MetadataRepository(...)` (which calls `init_schema()` in
+    `__init__`) must ALTER TABLE them in, not crash and not silently skip
+    indexing them.
+    """
+    import sqlite3
+
+    db_path = tmp_path / "pre_existing.db"
+    conn = sqlite3.connect(db_path)
+    conn.execute(
+        "CREATE TABLE documents (id TEXT PRIMARY KEY, file_name TEXT NOT NULL, "
+        "file_path TEXT NOT NULL, file_type TEXT NOT NULL, law_name TEXT, "
+        "file_hash TEXT NOT NULL UNIQUE, file_size_bytes INTEGER NOT NULL, "
+        "num_chunks INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'pending', "
+        "error_message TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);"
+    )
+    conn.execute(
+        "CREATE TABLE chunks (id TEXT PRIMARY KEY, document_id TEXT NOT NULL, "
+        "chunk_index INTEGER NOT NULL, text TEXT NOT NULL, char_count INTEGER NOT NULL, "
+        "law_name TEXT, article_number TEXT, section TEXT, page_number INTEGER, "
+        "created_at TEXT NOT NULL);"
+    )
+    conn.commit()
+    conn.close()
+
+    migrated_repo = MetadataRepository(db_path=db_path)  # must not raise
+
+    doc = _make_document()
+    doc.collection_id = "fuqarolik_kodeksi"
+    migrated_repo.upsert_document(doc)
+    assert migrated_repo.get_document("doc-1").collection_id == "fuqarolik_kodeksi"
+
+
+def test_get_collections_aggregates_documents_and_chunks(repo: MetadataRepository):
+    doc = _make_document()
+    doc.collection_id = "fuqarolik_kodeksi"
+    doc.collection_category = "kodekslar"
+    doc.collection_title = "Fuqarolik kodeksi"
+    repo.upsert_document(doc)
+    chunks = _make_chunks("doc-1", n=3)
+    for c in chunks:
+        c.collection_id = "fuqarolik_kodeksi"
+    repo.replace_chunks("doc-1", chunks)
+
+    collections = repo.get_collections()
+
+    assert len(collections) == 1
+    assert collections[0].collection_id == "fuqarolik_kodeksi"
+    assert collections[0].num_documents == 1
+    assert collections[0].num_chunks == 3

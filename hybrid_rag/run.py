@@ -52,9 +52,7 @@ def check_configuration() -> None:
     logger.info("BM25 index path:     %s", settings.bm25_path_resolved)
     logger.info("SQLite path:         %s", settings.sqlite_path_resolved)
 
-    if not settings.documents_path_resolved.exists() or not any(
-        settings.documents_path_resolved.rglob("*")
-    ):
+    if not settings.documents_path_resolved.exists() or not any(settings.documents_path_resolved.rglob("*")):
         logger.warning(
             "No documents found under %s — nothing to index yet.",
             settings.documents_path_resolved,

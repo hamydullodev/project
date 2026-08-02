@@ -17,10 +17,10 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from api.schemas import HealthResponse
 from app.config import settings
 from app.database import MetadataRepository
 from app.llm import list_available_models
-from api.schemas import HealthResponse
 
 router = APIRouter()
 
@@ -30,17 +30,29 @@ def health() -> HealthResponse:
     repo = MetadataRepository()
     stats = repo.get_statistics()
 
-    try:
-        models = list_available_models()
-        connected = True
-    except Exception:  # noqa: BLE001 - any failure here means "not connected", surfaced as data
-        models = []
-        connected = False
+    if settings.llm_provider == "gemini":
+        # No cheap, side-effect-free "is Gemini reachable" call exists
+        # (unlike Ollama's local `list()`); report "configured" (an API
+        # key is set) rather than a real network round-trip on every
+        # health check, mirroring how Ollama's own status is a fast local
+        # check, not a full generation request.
+        connected = settings.gemini_api_key is not None
+        models = [settings.gemini_model] if connected else []
+        active_model = settings.gemini_model
+    else:
+        try:
+            models = list_available_models()
+            connected = True
+        except Exception:  # noqa: BLE001 - any failure here means "not connected", surfaced as data
+            models = []
+            connected = False
+        active_model = settings.llm_model
 
     return HealthResponse(
+        llm_provider=settings.llm_provider,
         ollama_connected=connected,
         ollama_models=models,
-        llm_model=settings.llm_model,
+        llm_model=active_model,
         embedding_model=settings.embedding_model,
         total_documents=stats["total_documents"],
         total_chunks=stats["total_chunks"],

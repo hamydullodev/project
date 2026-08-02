@@ -17,6 +17,7 @@ from app.ingestion import (
     EmptyDocumentError,
     UnsupportedFileTypeError,
     load_document,
+    load_for_analysis,
 )
 from app.ingestion.cleaning import (
     clean_text,
@@ -94,7 +95,7 @@ def test_load_txt_utf8(tmp_path: Path):
 
 def test_load_txt_utf8_bom(tmp_path: Path):
     path = tmp_path / "law_bom.txt"
-    path.write_bytes(b"\xef\xbb\xbf" + "Matn BOM bilan".encode("utf-8"))
+    path.write_bytes(b"\xef\xbb\xbf" + b"Matn BOM bilan")
 
     doc = load_document(path)
     assert "﻿" not in doc.full_text
@@ -230,3 +231,47 @@ def test_load_pdf_blank_page_ocr_fallback_no_crash(tmp_path: Path):
     doc = load_document(path)
     assert doc.num_pages == 2
     assert "3-modda" in doc.pages[1]
+
+
+# ---------------------------------------------------------------------------
+# load_for_analysis (document-analysis upload endpoint's wider loader)
+# ---------------------------------------------------------------------------
+
+
+def test_load_for_analysis_dispatches_txt_to_load_document(tmp_path: Path):
+    path = tmp_path / "note.txt"
+    path.write_text("1-modda. Tahlil uchun sinov matni.", encoding="utf-8")
+
+    doc = load_for_analysis(path)
+    assert doc.file_type == "txt"
+    assert "1-modda" in doc.full_text
+
+
+def test_load_for_analysis_ocrs_a_standalone_image(tmp_path: Path):
+    pytest.importorskip("pytesseract")
+    Image = pytest.importorskip("PIL.Image")
+    ImageDraw = pytest.importorskip("PIL.ImageDraw")
+
+    path = tmp_path / "shartnoma.png"
+    image = Image.new("RGB", (600, 120), color="white")
+    draw = ImageDraw.Draw(image)
+    draw.text((10, 40), "SHARTNOMA MATNI", fill="black")
+    image.save(path)
+
+    doc = load_for_analysis(path)
+    assert doc.file_type == "image"
+    # OCR quality on synthetic rendered text isn't perfect, but SOME
+    # recognizable fragment of the rendered word should come back —
+    # this is the "OCR runs and returns real text, not a crash" check.
+    assert "SHARTNOMA" in doc.full_text.upper() or "MATNI" in doc.full_text.upper()
+
+
+def test_load_for_analysis_blank_image_raises_empty_document_error(tmp_path: Path):
+    pytest.importorskip("pytesseract")
+    Image = pytest.importorskip("PIL.Image")
+
+    path = tmp_path / "blank.png"
+    Image.new("RGB", (100, 100), color="white").save(path)
+
+    with pytest.raises(EmptyDocumentError):
+        load_for_analysis(path)

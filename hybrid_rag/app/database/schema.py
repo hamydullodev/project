@@ -59,33 +59,39 @@ from __future__ import annotations
 
 DOCUMENTS_TABLE = """
 CREATE TABLE IF NOT EXISTS documents (
-    id               TEXT PRIMARY KEY,
-    file_name        TEXT NOT NULL,
-    file_path        TEXT NOT NULL,
-    file_type        TEXT NOT NULL,              -- pdf | docx | txt | html
-    law_name         TEXT,
-    file_hash        TEXT NOT NULL UNIQUE,        -- sha256(raw bytes) — dedup + change detection
-    file_size_bytes  INTEGER NOT NULL,
-    num_chunks       INTEGER NOT NULL DEFAULT 0,
-    status           TEXT NOT NULL DEFAULT 'pending',  -- pending | indexed | failed
-    error_message    TEXT,
-    created_at       TEXT NOT NULL,
-    updated_at       TEXT NOT NULL
+    id                  TEXT PRIMARY KEY,
+    file_name           TEXT NOT NULL,
+    file_path           TEXT NOT NULL,
+    file_type           TEXT NOT NULL,              -- pdf | docx | txt | html
+    law_name            TEXT,
+    collection_id        TEXT,                        -- e.g. "jinoyat_kodeksi" — derived from folder, see app/config/collections.py
+    collection_category  TEXT,                        -- e.g. "kodekslar" | "qonunlar" | "konstitutsiya" | "other"
+    collection_title     TEXT,                        -- human-readable display title for collection_id
+    file_hash           TEXT NOT NULL UNIQUE,        -- sha256(raw bytes) — dedup + change detection
+    file_size_bytes     INTEGER NOT NULL,
+    num_chunks          INTEGER NOT NULL DEFAULT 0,
+    status              TEXT NOT NULL DEFAULT 'pending',  -- pending | indexed | failed
+    error_message       TEXT,
+    created_at          TEXT NOT NULL,
+    updated_at           TEXT NOT NULL
 );
 """
 
 CHUNKS_TABLE = """
 CREATE TABLE IF NOT EXISTS chunks (
-    id               TEXT PRIMARY KEY,              -- f"{document_id}::{chunk_index:05d}"
-    document_id      TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-    chunk_index      INTEGER NOT NULL,               -- 0-based position within the document
-    text             TEXT NOT NULL,
-    char_count       INTEGER NOT NULL,
-    law_name         TEXT,
-    article_number   TEXT,
-    section          TEXT,                            -- e.g. "I BO'LIM > 1-BOB"
-    page_number      INTEGER,
-    created_at       TEXT NOT NULL
+    id                  TEXT PRIMARY KEY,              -- f"{document_id}::{chunk_index:05d}"
+    document_id          TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    chunk_index          INTEGER NOT NULL,               -- 0-based position within the document
+    text                TEXT NOT NULL,
+    char_count           INTEGER NOT NULL,
+    law_name            TEXT,
+    collection_id        TEXT,                            -- denormalized from documents, same rationale as law_name
+    collection_category  TEXT,
+    collection_title     TEXT,
+    article_number       TEXT,
+    section              TEXT,                            -- e.g. "I BO'LIM > 1-BOB"
+    page_number           INTEGER,
+    created_at            TEXT NOT NULL
 );
 """
 
@@ -93,9 +99,26 @@ INDEXES = [
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_documents_file_hash ON documents(file_hash);",
     "CREATE INDEX IF NOT EXISTS idx_documents_file_path ON documents(file_path);",
     "CREATE INDEX IF NOT EXISTS idx_documents_status ON documents(status);",
+    "CREATE INDEX IF NOT EXISTS idx_documents_collection_id ON documents(collection_id);",
     "CREATE INDEX IF NOT EXISTS idx_chunks_document_id ON chunks(document_id);",
     "CREATE INDEX IF NOT EXISTS idx_chunks_law_name ON chunks(law_name);",
     "CREATE INDEX IF NOT EXISTS idx_chunks_article_number ON chunks(article_number);",
+    "CREATE INDEX IF NOT EXISTS idx_chunks_collection_id ON chunks(collection_id);",
 ]
 
-ALL_STATEMENTS = [DOCUMENTS_TABLE, CHUNKS_TABLE, *INDEXES]
+TABLES = [DOCUMENTS_TABLE, CHUNKS_TABLE]
+ALL_STATEMENTS = [*TABLES, *INDEXES]
+
+# Columns added after the initial release of this schema. `init_schema()`
+# in repository.py applies these via `ALTER TABLE ... ADD COLUMN` for any
+# already-existing database that predates them — `CREATE TABLE IF NOT
+# EXISTS` above only helps brand-new databases, not upgrading existing ones.
+MIGRATIONS: list[tuple[str, str, str]] = [
+    # (table, column, full "ADD COLUMN" fragment)
+    ("documents", "collection_id", "collection_id TEXT"),
+    ("documents", "collection_category", "collection_category TEXT"),
+    ("documents", "collection_title", "collection_title TEXT"),
+    ("chunks", "collection_id", "collection_id TEXT"),
+    ("chunks", "collection_category", "collection_category TEXT"),
+    ("chunks", "collection_title", "collection_title TEXT"),
+]

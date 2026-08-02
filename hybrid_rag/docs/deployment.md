@@ -1,71 +1,81 @@
-# Deployment
+# Joylashtirish
 
-<sub>[← Back to README](../README.md)</sub>
+<sub>[← README'ga qaytish](../README.md)</sub>
 
-UzLaw AI is designed to run fully locally — there is no managed cloud
-deployment target today. This doc covers running it reliably on a single
-machine (a workstation, or a self-hosted server on your own network).
+UzLaw AI to'liq lokal ishlashga mo'ljallangan — hozircha boshqariluvchi
+bulutli joylashtirish nishoni yo'q. Ushbu hujjat uni bitta mashinada
+(ish stansiyasi yoki o'z tarmog'ingizdagi self-hosted server) ishonchli
+ishga tushirishni yoritadi.
 
-## The three processes
+## Uchta jarayon
 
-| Process | Command | Port | Required for |
+| Jarayon | Buyruq | Port | Nima uchun kerak |
 |---|---|---|---|
-| FastAPI backend | `python run_api.py` | `8000` | The product (frontend depends on it) |
-| Next.js frontend | `npm run dev` (or `npm run build && npm start`) | `3000` | The product |
-| Ollama | `ollama serve` | `11434` | Answer generation (every page except Streamlit's Statistics) |
-| Streamlit debug tool *(optional)* | `python run.py` | `8501` | Index management / retrieval debug / statistics only |
+| FastAPI backend | `python run_api.py` | `8000` | Mahsulot (frontend shunga bog'liq) |
+| Next.js frontend | `npm run dev` (yoki `npm run build && npm start`) | `3000` | Mahsulot |
+| Ollama *(agar `LLM_PROVIDER=ollama` bo'lsa)* | `ollama serve` | `11434` | Javob generatsiyasi |
+| Streamlit diagnostika vositasi *(ixtiyoriy)* | `python run.py` | `8501` | Faqat indeks boshqaruvi / qidiruv diagnostikasi / statistika |
 
-`run_api.py` calls `uvicorn.run(...)` directly (uvicorn's own documented
-way to start a server programmatically), while `run.py` shells out to
-`streamlit run` via `subprocess` specifically because Streamlit's own
-internals (`streamlit.web.bootstrap`) are not a documented, stable
-public API.
+`run_api.py` `uvicorn.run(...)`ni bevosita chaqiradi (uvicorn'ning
+o'zining hujjatlashtirilgan dasturiy ishga tushirish usuli), `run.py`
+esa `subprocess` orqali `streamlit run`ni chaqiradi — chunki
+Streamlit'ning o'z ichki API'si (`streamlit.web.bootstrap`)
+hujjatlashtirilgan barqaror ochiq API emas.
 
-## Production frontend build
+`LLM_PROVIDER=gemini` bo'lsa, Ollama umuman kerak emas — faqat
+`.env`da `GEMINI_API_KEY` bo'lishi kifoya.
 
-Development mode (`npm run dev`) uses Turbopack with hot reload — fine
-locally, not what you want for a longer-running deployment:
+## Production frontend qurilishi
+
+Ishlab chiqish rejimi (`npm run dev`) Turbopack va hot reload'dan
+foydalanadi — lokal uchun yaxshi, lekin uzoq muddatli joylashtirish
+uchun mos emas:
 
 ```bash
 cd frontend
 npm run build
-npm start            # serves the production build on :3000
+npm start            # production qurilmani :3000 portida taqdim etadi
 ```
 
-## Indexing
+## Indekslash
 
-The index (FAISS + BM25 + SQLite metadata) is generated, not committed —
-`indexes/*` and `data/*.db` are gitignored. On a fresh clone:
+Indeks (FAISS + BM25 + SQLite metama'lumotlari) generatsiya qilinadi,
+git'ga commit qilinmaydi — `indexes/*` va `data/*.db` gitignore
+qilingan. Yangi klondan keyin:
 
-- Via the Streamlit tool: **Indeksni boshqarish** → **Indeksni qurish /
-  yangilash** (always incremental; a full rebuild / delete is available
-  behind a two-step confirmation since it's destructive).
-- Or directly: `IndexingPipeline().sync()`.
+- Streamlit vositasi orqali: **Indeksni boshqarish** → **Indeksni qurish
+  / yangilash** (har doim inkremental; to'liq qayta qurish / o'chirish
+  ikki bosqichli tasdiqlash ortida, chunki bu buzg'unchi amal).
+- Yoki to'g'ridan-to'g'ri: `IndexingPipeline().sync()`.
 
-Re-indexing an unchanged file is a fast no-op — content-hash-based
-deduplication skips it.
+O'zgarmagan faylni qayta indekslash tez, hech narsa qilmaydi — kontent
+xeshiga asoslangan dublikatlarni aniqlash uni o'tkazib yuboradi.
 
-## Health checks
+## Salomatlik tekshiruvi
 
-`GET /api/health` reports Ollama connectivity, the configured
-`LLM_MODEL`/`EMBEDDING_MODEL`, and corpus size (`total_documents`,
-`total_chunks`) — useful as a liveness/readiness probe if you put this
-behind a process supervisor.
+`GET /api/health` faol LLM provayder holatini (Ollama ulanishi yoki
+Gemini kaliti mavjudligi), sozlangan `LLM_MODEL`/`EMBEDDING_MODEL`ni va
+korpus hajmini (`total_documents`, `total_chunks`) ko'rsatadi — buni
+process supervisor ortida jonlilik/tayyorlik probasi sifatida
+ishlatish mumkin.
 
-## Error handling in production
+## Production'da xatolarni boshqarish
 
-Each layer defines its own typed exceptions rather than letting raw
-library errors propagate to a user: `VectorStoreError` / `BM25IndexError`
-for corrupted or missing indexes (the pipeline falls back to an empty
-index rather than crashing), `DocumentLoadError` for broken/undecodable
-source files, `LLMConnectionError` / `LLMModelNotFoundError` for an
-unreachable or unpulled Ollama model — surfaced as a clear message (an
-HTTP 503 from the API, or an in-UI message in Streamlit), never a raw
-stack trace.
+Har bir qatlam xom kutubxona xatolarini foydalanuvchiga
+oshkor qilmasdan, o'zining tipdagi istisnolarini belgilaydi:
+buzilgan yoki yo'q indekslar uchun `VectorStoreError` / `BM25IndexError`
+(pipeline halokatga uchramasdan bo'sh indeksga qaytadi), buzilgan/dekod
+qilib bo'lmaydigan manba fayllar uchun `DocumentLoadError`, mavjud
+bo'lmagan LLM ulanishi/yuklab olinmagan Ollama modeli yoki bulutli
+provayder xatosi (kvota, ulanish) uchun `LLMError` iyerarxiyasi — bular
+aniq xabar sifatida ko'rsatiladi (API'dan HTTP 503, yoki Streamlit'da
+interfeys ichidagi xabar), hech qachon xom stack trace emas.
 
-## What's intentionally out of scope
+## Ataylab qamrovdan tashqarida qoldirilgan narsalar
 
-There is no authentication, multi-tenancy, or hosted/managed deployment
-here — this is a single-user, local-first tool by design (per its own
-"no cloud APIs, no external services after setup" premise). Adding those
-would be a significant architectural change, not a deployment detail.
+Bu yerda autentifikatsiya, ko'p-ijarachilik yoki boshqariluvchi
+joylashtirish yo'q — bu ataylab yagona foydalanuvchi, lokal-birinchi
+vosita ("sozlashdan keyin tashqi xizmatlarga bog'liq emas" g'oyasiga
+ko'ra, Gemini tanlangan holatda bundan mustasno). Bularni qo'shish
+katta arxitektura o'zgarishi bo'lar edi, oddiy joylashtirish tafsiloti
+emas.

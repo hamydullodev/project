@@ -157,9 +157,7 @@ def test_results_sorted_by_combined_score_descending(built_indexes):
 def test_dense_weight_one_ignores_sparse_score(built_indexes):
     vector_store, bm25_index, dense_vecs = built_indexes
     fake_embedder = FakeEmbeddingModel(query_vector=dense_vecs[0])
-    retriever = HybridRetriever(
-        vector_store, bm25_index, fake_embedder, dense_weight=1.0, sparse_weight=0.0
-    )
+    retriever = HybridRetriever(vector_store, bm25_index, fake_embedder, dense_weight=1.0, sparse_weight=0.0)
 
     results = {r.chunk_id: r for r in retriever.retrieve("fuqarolik huquqi", top_k=10)}
     for r in results.values():
@@ -173,9 +171,7 @@ def test_dense_weight_one_ignores_sparse_score(built_indexes):
 def test_sparse_weight_one_ignores_dense_score(built_indexes):
     vector_store, bm25_index, dense_vecs = built_indexes
     fake_embedder = FakeEmbeddingModel(query_vector=dense_vecs[0])
-    retriever = HybridRetriever(
-        vector_store, bm25_index, fake_embedder, dense_weight=0.0, sparse_weight=1.0
-    )
+    retriever = HybridRetriever(vector_store, bm25_index, fake_embedder, dense_weight=0.0, sparse_weight=1.0)
 
     results = {r.chunk_id: r for r in retriever.retrieve("fuqarolik huquqi", top_k=10)}
     for r in results.values():

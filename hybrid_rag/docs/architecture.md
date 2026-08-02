@@ -1,75 +1,77 @@
-# Architecture
+# Arxitektura
 
-<sub>[← Back to README](../README.md)</sub>
+<sub>[← README'ga qaytish](../README.md)</sub>
 
-## System overview
+## Tizimga umumiy nazar
 
-UzLaw AI has two independent surfaces sharing one Python core:
+UzLaw AI bitta umumiy Python yadrosiga tayanadigan ikkita mustaqil qatlamga ega:
 
 ```mermaid
 flowchart LR
-    subgraph Product["Product (end users)"]
+    subgraph Product["Mahsulot (foydalanuvchilar)"]
         FE["Next.js Frontend<br/>:3000"] -->|"POST /api/ask (SSE)"| API["FastAPI Backend<br/>:8000"]
     end
-    subgraph Internal["Internal tool (maintainers)"]
-        ST["Streamlit App<br/>:8501"]
+    subgraph Internal["Ichki vosita (mas'ullar uchun)"]
+        ST["Streamlit ilova<br/>:8501"]
     end
     API --> CORE
     ST --> CORE
-    CORE["app/ — RAG engine<br/>(framework-agnostic)"] --> IDX[("FAISS + BM25 + SQLite")]
-    CORE --> LLM[("Ollama")]
+    CORE["app/ — RAG yadrosi<br/>(freymvorkdan mustaqil)"] --> IDX[("FAISS + BM25 + SQLite")]
+    CORE --> LLM[("Gemini / Ollama")]
 ```
 
-- **`app/`** is the framework-agnostic core: ingestion, chunking, hybrid
-  retrieval, reranking, prompting, and the `RAGPipeline` that wires them
-  together. Neither the API nor Streamlit duplicates this logic — both
-  call into the same `RAGPipeline`.
-- **`api/`** is a thin FastAPI layer over `app/` — one route
-  (`POST /api/ask`) that streams Server-Sent Events, plus a health check.
-  It is the *only* public contract the frontend depends on
-  (`api/schemas.py`'s `SourceOut`), specifically so an internal refactor
-  of `app/`'s pipeline objects can never silently break the frontend.
-- **`frontend/`** is the end-user product: search box, streaming answer,
-  citations, saved answers.
-- **Streamlit (`app/ui/`)** stays as the internal/debug tool — index
-  management, retrieval debug (full score breakdowns), and statistics —
-  rather than being reimplemented in the product UI.
+- **`app/`** — freymvorkdan mustaqil yadro: hujjat yuklash, bo'laklash,
+  hybrid qidiruv, qayta saralash, prompt tuzish va bularning barchasini
+  bog'lovchi `RAGPipeline`. API ham, Streamlit ham bu mantiqni
+  takrorlamaydi — ikkalasi ham bir xil `RAGPipeline`ga murojaat qiladi.
+- **`api/`** — `app/` ustidagi yupqa FastAPI qatlami: Server-Sent Events
+  orqali striming beruvchi bir nechta yo'nalish (`POST /api/ask`,
+  `POST /api/analyze-document`, `GET /api/collections`) va health-check.
+  Bu frontend bog'liq bo'lgan *yagona* ochiq shartnoma
+  (`api/schemas.py`dagi `SourceOut`) — shu bois `app/`ning ichki
+  pipeline obyektlarini refaktor qilish frontendni sezilmasdan
+  buzib qo'ymaydi.
+- **`frontend/`** — yakuniy foydalanuvchi mahsuloti: qidiruv oynasi,
+  striming javob, iqtiboslar, hujjat yuklab tahlil qilish.
+- **Streamlit (`app/ui/`)** — ichki/diagnostika vositasi bo'lib qoladi:
+  indeks boshqaruvi, qidiruv diagnostikasi (to'liq ball taqsimoti) va
+  statistika — mahsulot interfeysida qayta yozilmaydi.
 
-## Why `retrieve()` and `ask()` are separate
+## Nega `retrieve()` va `ask()` alohida
 
-`RAGPipeline.retrieve()` runs every stage *except* the final LLM call
-(preprocess → hybrid retrieve → rerank → compress) and returns a
-`RetrievalContext` holding the output of *every* stage, not just the
-final compressed chunks. `ask()`/`ask_stream()` call `retrieve()` and
-then generate from it. This split exists because different callers need
-different subsets of the work:
+`RAGPipeline.retrieve()` LLM chaqiruvidan *tashqari* barcha bosqichlarni
+(qayta ishlash → hybrid qidiruv → qayta saralash → siqish) bajaradi va
+har bir bosqichning natijasini saqlovchi `RetrievalContext`ni qaytaradi
+— faqat yakuniy siqilgan bo'laklarni emas. `ask()`/`ask_stream()` avval
+`retrieve()`ni chaqiradi, keyin shundan javob generatsiya qiladi. Bu
+bo'linish turli chaqiruvchilarga turli qismlar kerakligi sababli mavjud:
 
-- The **Chat/product flow** wants a full streamed answer.
-- The **Retrieval Debug page** wants to show *how* a query was retrieved
-  and reranked — dense/sparse/reranker scores at every stage — without
-  necessarily generating an answer.
-- **Streaming** needs sources available immediately (so the frontend can
-  render the sources panel right away) while the answer is still being
-  generated — `ask_stream()` calls `retrieve()` first (fast, no LLM),
-  then starts the slow part.
+- **Chat/mahsulot oqimi** to'liq striming javob xohlaydi.
+- **Qidiruv diagnostika sahifasi** so'rov qanday qidirilgan va qayta
+  saralanganini — har bosqichdagi dense/sparse/reranker ballarini —
+  ko'rsatishni xohlaydi, javob generatsiya qilmasdan ham.
+- **Striming** manbalarni darhol talab qiladi (frontend manbalar
+  panelini darhol chizishi uchun), javob hali generatsiya qilinayotgan
+  paytda — `ask_stream()` avval `retrieve()`ni chaqiradi (tez, LLM
+  ishtirokisiz), keyingina sekin qismni boshlaydi.
 
-## Why an empty result short-circuits before the LLM
+## Nega bo'sh natija LLM chaqirilishidan oldin to'xtaydi
 
-If retrieval finds nothing relevant, the pipeline returns the "not found"
-message directly, without calling the LLM at all. The system prompt also
-instructs the model to say this when its context doesn't answer the
-question — but for the one case where there is *zero* context, a direct
-code-level check is a stronger guarantee than trusting the model to
-notice and comply, which matters for a "never fabricate a citation"
-requirement.
+Agar qidiruv hech narsa topmasa, pipeline "topilmadi" xabarini
+to'g'ridan-to'g'ri qaytaradi, LLM umuman chaqirilmaydi. Tizim prompti
+ham modelga kontekst savolga javob bermasa shunday deyishni buyuradi —
+lekin kontekst *butunlay yo'q* bo'lgan yagona holat uchun kod darajasidagi
+to'g'ridan-to'g'ri tekshiruv modelning buni payqab, rioya qilishiga
+ishonishdan kuchliroq kafolat beradi — bu "hech qachon iqtibos o'ylab
+topmaslik" talabi uchun muhim.
 
-## The API contract
+## API shartnomasi
 
-`api/schemas.py`'s `SourceOut` is deliberately a separate model from
-`app.reranker.RerankedResult` — the internal pipeline model can evolve
-freely (it's shaped however the pipeline's stages naturally produce
-data) without risking a silent break in the frontend, since
-`SourceOut.from_reranked()` is the one explicit translation point.
+`api/schemas.py`dagi `SourceOut` ataylab `app.reranker.RerankedResult`dan
+alohida model — ichki pipeline modeli erkin rivojlanishi mumkin (u
+pipeline bosqichlari tabiiy ravishda ishlab chiqargan shaklda bo'ladi),
+frontendni sezilmasdan buzib qo'yish xavfisiz, chunki
+`SourceOut.from_reranked()` yagona aniq tarjima nuqtasidir.
 
-See [`hybrid-retrieval.md`](hybrid-retrieval.md) for how a query actually
-becomes a ranked set of chunks.
+So'rov qanday qilib saralangan bo'laklar to'plamiga aylanishi haqida
+qarang: [`hybrid-retrieval.md`](hybrid-retrieval.md).

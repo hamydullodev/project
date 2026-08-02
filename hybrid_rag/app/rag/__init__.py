@@ -12,8 +12,8 @@ from app.rag.evaluation import (
     recall_at_k,
     reciprocal_rank,
 )
-from app.rag.query_processing import EmptyQueryError, preprocess_query
 from app.rag.pipeline import RAGAnswer, RAGPipeline, RetrievalContext
+from app.rag.query_processing import EmptyQueryError, preprocess_query
 
 __all__ = [
     "preprocess_query",

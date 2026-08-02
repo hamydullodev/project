@@ -123,14 +123,25 @@ def populated_pipeline(tmp_path: Path, embedding_model, reranker, llm) -> RAGPip
         doc_id = f"doc-{i}"
         repo.upsert_document(
             DocumentRecord(
-                id=doc_id, file_name=f"{law}.txt", file_path=f"/fake/{law}.txt",
-                file_type="txt", law_name=law, file_hash=f"hash-{i}", file_size_bytes=len(text),
+                id=doc_id,
+                file_name=f"{law}.txt",
+                file_path=f"/fake/{law}.txt",
+                file_type="txt",
+                law_name=law,
+                file_hash=f"hash-{i}",
+                file_size_bytes=len(text),
             )
         )
         chunk_id = ChunkRecord.make_id(doc_id, 0)
         record = ChunkRecord(
-            id=chunk_id, document_id=doc_id, chunk_index=0, text=text,
-            char_count=len(text), law_name=law, article_number=article,
+            id=chunk_id,
+            document_id=doc_id,
+            chunk_index=0,
+            text=text,
+            char_count=len(text),
+            law_name=law,
+            collection_id=law.lower().replace(" ", "_"),
+            article_number=article,
         )
         repo.replace_chunks(doc_id, [record])
         chunk_ids.append(chunk_id)
@@ -141,8 +152,12 @@ def populated_pipeline(tmp_path: Path, embedding_model, reranker, llm) -> RAGPip
     bm25_index.build(chunk_ids, texts)
 
     return RAGPipeline(
-        repo=repo, embedding_model=embedding_model, vector_store=vector_store,
-        bm25_index=bm25_index, reranker=reranker, llm=llm,
+        repo=repo,
+        embedding_model=embedding_model,
+        vector_store=vector_store,
+        bm25_index=bm25_index,
+        reranker=reranker,
+        llm=llm,
     )
 
 
@@ -152,8 +167,12 @@ def empty_pipeline(tmp_path: Path, embedding_model, reranker) -> RAGPipeline:
     vector_store = FAISSVectorStore(dimension=embedding_model.dimension, path=tmp_path / "empty_vectors")
     bm25_index = BM25SparseIndex(path=tmp_path / "empty_bm25.pkl")
     return RAGPipeline(
-        repo=repo, embedding_model=embedding_model, vector_store=vector_store,
-        bm25_index=bm25_index, reranker=reranker, llm=_RaisingLLM(),
+        repo=repo,
+        embedding_model=embedding_model,
+        vector_store=vector_store,
+        bm25_index=bm25_index,
+        reranker=reranker,
+        llm=_RaisingLLM(),
     )
 
 
@@ -172,6 +191,21 @@ def test_retrieve_returns_full_context(populated_pipeline: RAGPipeline):
     # The Mehnat kodeksi chunk should be the top result for this query.
     assert context.compression.kept[0].law_name == "Mehnat kodeksi"
     assert context.compression.kept[0].article_number == "155"
+
+
+def test_retrieve_with_collection_ids_scopes_to_requested_collections(populated_pipeline: RAGPipeline):
+    """A broad query, scoped to one collection, should only return chunks
+    from that collection — even though other collections' chunks would
+    otherwise rank higher (Jinoyat kodeksi's 42-modda is a strong generic
+    match for "javobgarlik", but is excluded here by the collection_ids
+    filter).
+    """
+    context = populated_pipeline.retrieve(
+        "javobgarlik qanday yuzaga keladi?", collection_ids=["mehnat_kodeksi"]
+    )
+
+    assert len(context.compression.kept) > 0
+    assert all(r.collection_id == "mehnat_kodeksi" for r in context.compression.kept)
 
 
 def test_retrieve_context_has_score_provenance(populated_pipeline: RAGPipeline):
@@ -246,31 +280,52 @@ def test_answer_found_reflects_llm_output_deterministically(tmp_path: Path, embe
     doc_id, article, text = "doc-0", CORPUS[0][0], CORPUS[0][2]
     repo.upsert_document(
         DocumentRecord(
-            id=doc_id, file_name="test.txt", file_path="/fake/test.txt", file_type="txt",
-            law_name=CORPUS[0][1], file_hash="h1", file_size_bytes=len(text),
+            id=doc_id,
+            file_name="test.txt",
+            file_path="/fake/test.txt",
+            file_type="txt",
+            law_name=CORPUS[0][1],
+            file_hash="h1",
+            file_size_bytes=len(text),
         )
     )
     chunk_id = ChunkRecord.make_id(doc_id, 0)
     repo.replace_chunks(
         doc_id,
-        [ChunkRecord(id=chunk_id, document_id=doc_id, chunk_index=0, text=text,
-                     char_count=len(text), law_name=CORPUS[0][1], article_number=article)],
+        [
+            ChunkRecord(
+                id=chunk_id,
+                document_id=doc_id,
+                chunk_index=0,
+                text=text,
+                char_count=len(text),
+                law_name=CORPUS[0][1],
+                article_number=article,
+            )
+        ],
     )
     vecs = embedding_model.embed_documents([text], show_progress=False)
     vector_store.add([chunk_id], vecs)
     bm25_index.build([chunk_id], [text])
 
     grounded_pipeline = RAGPipeline(
-        repo=repo, embedding_model=embedding_model, vector_store=vector_store,
-        bm25_index=bm25_index, reranker=reranker,
+        repo=repo,
+        embedding_model=embedding_model,
+        vector_store=vector_store,
+        bm25_index=bm25_index,
+        reranker=reranker,
         llm=_StubLLM("Mehnat kodeksining 155-moddasiga koʻra shartnoma bekor qilinishi mumkin."),
     )
     grounded_result = grounded_pipeline.ask("Mehnat shartnomasi haqida?")
     assert grounded_result.answer_found is True
 
     not_found_pipeline = RAGPipeline(
-        repo=repo, embedding_model=embedding_model, vector_store=vector_store,
-        bm25_index=bm25_index, reranker=reranker, llm=_StubLLM(NOT_FOUND_MESSAGE_UZ),
+        repo=repo,
+        embedding_model=embedding_model,
+        vector_store=vector_store,
+        bm25_index=bm25_index,
+        reranker=reranker,
+        llm=_StubLLM(NOT_FOUND_MESSAGE_UZ),
     )
     not_found_result = not_found_pipeline.ask("Mehnat shartnomasi haqida?")
     assert not_found_result.answer_found is False

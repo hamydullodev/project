@@ -1,73 +1,80 @@
-# Evaluation
+# Baholash
 
-<sub>[← Back to README](../README.md)</sub>
+<sub>[← README'ga qaytish](../README.md)</sub>
 
-## Retrieval metrics
+## Qidiruv metrikalari
 
-`app/rag/evaluation.py` implements four standard information-retrieval
-metrics, hand-implemented (cross-checked against scikit-learn's
-reference `ndcg_score` in `test_retrieval_metrics.py` rather than
-delegated to a library):
+`app/rag/evaluation.py` to'rtta standart axborot-qidiruv metrikasini
+qo'lda amalga oshiradi (kutubxonaga topshirilmasdan,
+`test_retrieval_metrics.py`da scikit-learn'ning ma'lumotnoma
+`ndcg_score`si bilan ham tekshirilgan):
 
-| Metric | What it measures |
+| Metrika | Nimani o'lchaydi |
 |---|---|
-| **Precision@K** | Of the top K retrieved chunks, what fraction are actually relevant? |
-| **Recall@K** | Of all relevant chunks, what fraction appear in the top K? |
-| **MRR** | Mean Reciprocal Rank — how high up the *first* relevant result lands, averaged over queries |
-| **nDCG@K** | Normalized Discounted Cumulative Gain — rewards relevant results appearing *earlier*, not just present |
+| **Precision@K** | Topilgan eng yaxshi K bo'lakdan qanchasi haqiqatan tegishli? |
+| **Recall@K** | Barcha tegishli bo'laklardan qanchasi eng yaxshi K ichida chiqadi? |
+| **MRR** | O'rtacha teskari rang — *birinchi* tegishli natija qanchalik yuqorida chiqadi, so'rovlar bo'yicha o'rtachalashtirilgan |
+| **nDCG@K** | Normallashtirilgan chegirmali kumulyativ foyda — tegishli natijalar *ertaroq* chiqishini mukofotlaydi, shunchaki mavjudligini emas |
 
-Relevance is graded at the **article level**, not the chunk level — a
-retrieved chunk counts as relevant if it belongs to the article the
-golden query is actually about, since that's the unit a user cites and
-verifies against, not an arbitrary sub-chunk boundary.
+Tegishlilik **modda darajasida** baholanadi, bo'lak darajasida emas —
+topilgan bo'lak, agar u "oltin" so'rov haqiqatda tegishli bo'lgan
+moddaga tegishli bo'lsa, tegishli hisoblanadi, chunki foydalanuvchi
+aynan shu birlikka iqtibos qiladi va tekshiradi, o'zboshimchalik bilan
+bo'lingan bo'lak chegarasiga emas.
 
-## The golden dataset
+## Oltin ma'lumotlar to'plami
 
-`tests/evaluation/golden_dataset.py` holds 8 hand-verified
-(query → relevant article) pairs, at least one per legal code, each
-built by finding a distinctive fact in the real source text and phrasing
-a natural Uzbek question about it — not synthetically generated. Current
-results against the indexed corpus:
+`tests/evaluation/golden_dataset.py` 8 ta qo'lda tekshirilgan
+(so'rov → tegishli modda) juftlikni saqlaydi, har bir qonun kodeksi
+uchun kamida bittadan — har biri haqiqiy manba matnidan xarakterli
+faktni topib, u haqida tabiiy o'zbekcha savol tuzish orqali yaratilgan,
+sun'iy generatsiya qilinmagan. Indekslangan korpusga nisbatan hozirgi
+natijalar:
 
-| Metric | Score |
+| Metrika | Ball |
 |---|---|
-| Precision@5 | 0.20 *(ceiling for this dataset — exactly 1 relevant article per query, in 5 slots)* |
+| Precision@5 | 0.20 *(bu to'plam uchun shift — har bir so'rovda aynan 1 ta tegishli modda, 5 ta o'rinda)* |
 | Recall@5 | 1.00 |
 | MRR | 0.70 |
 | nDCG@5 | 0.77 |
 
-`test_retrieval_evaluation.py` asserts these stay above a floor — not a
-perfect score, deliberately loose for an 8-query sample — as a
-regression guard: a future change to chunking, the embedding model, or
-fusion weights that meaningfully drops retrieval quality fails this test.
+`test_retrieval_evaluation.py` bularning ma'lum bir chegaradan
+pastga tushmasligini tasdiqlaydi — mukammal ball emas, 8 ta so'rovlik
+namuna uchun ataylab bo'sh qoldirilgan — regressiya himoyasi sifatida:
+bo'laklash, embedding modeli yoki birlashtirish og'irliklariga
+kelajakdagi o'zgarish qidiruv sifatini sezilarli pasaytirsa, bu test
+muvaffaqiyatsiz bo'ladi.
 
-## Testing philosophy
+## Test falsafasi
 
-The suite favors real components over mocks wherever the real component
-is fast and deterministic enough to use directly — the actual chunker,
-the actual SQLite repository, the actual FAISS/BM25 indexes over small
-in-memory corpora. Mocks are reserved for genuinely external, slow, or
-non-deterministic dependencies (Ollama's HTTP calls).
+Test to'plami haqiqiy komponent tez va deterministik bo'lgan har
+joyda mock'lar o'rniga haqiqiy komponentlarni afzal ko'radi — haqiqiy
+bo'laklovchi, haqiqiy SQLite repozitoriysi, kichik xotiradagi
+korpuslar ustida haqiqiy FAISS/BM25 indekslari. Mock'lar faqat
+haqiqatan tashqi, sekin yoki nodeterministik bog'liqliklar
+(Ollama/Gemini'ning HTTP chaqiruvlari) uchun ishlatiladi.
 
-A handful of tests deliberately run against this project's own real,
-already-indexed corpus rather than an isolated fixture — representative
-behavior, not test pollution, since retrieval quality against synthetic
-fixtures wouldn't say anything meaningful about real-world quality.
-These specific tests need the real corpus indexed first, and (for
-generation-dependent tests) a running `ollama serve` with `LLM_MODEL`
-pulled.
+Bir qancha testlar ataylab ajratilgan fixture o'rniga loyihaning
+haqiqiy, allaqachon indekslangan korpusiga nisbatan ishlaydi — bu
+haqiqiy xatti-harakatni aks ettiradi, test ifloslanishi emas, chunki
+sun'iy fixture'larga nisbatan qidiruv sifati haqiqiy dunyo sifati
+haqida hech narsa demaydi. Bu aniq testlar avval haqiqiy korpus
+indekslanishini talab qiladi, generatsiyaga bog'liq testlar uchun esa
+— ishlab turgan `ollama serve` (`LLM_MODEL` yuklab olingan) yoki
+sozlangan Gemini kaliti kerak.
 
 ```bash
-python -m pytest                        # full suite
-python -m pytest -k "not page"           # skip the slower Streamlit AppTest suites
-python -m pytest tests/evaluation/ -v    # retrieval-quality metrics only
+python -m pytest                        # to'liq to'plam
+python -m pytest -k "not page"           # sekinroq Streamlit AppTest to'plamlarini o'tkazib yuborish
+python -m pytest tests/evaluation/ -v    # faqat qidiruv sifati metrikalari
 ```
 
-## A note on small local LLMs
+## Kichik lokal LLM'lar haqida eslatma
 
-The default `LLM_MODEL`, `llama3.2:3b`, is small (3B parameters) and can
-occasionally produce repetitive or self-contradictory answers under a
-sparse retrieved context (see `app/llm/ollama_client.py`'s docstring for
-the full investigation). This is a model-capability limitation, not a
-pipeline bug — a larger model (`qwen2.5:7b` or similar, RAM permitting)
-is the direct fix if you see it in practice.
+Standart `LLM_MODEL`, `llama3.2:3b`, kichik (3B parametr) va siyrak
+kontekst ostida ba'zan takrorlanuvchi yoki o'zaro ziddiyatli javoblar
+berishi mumkin (to'liq tadqiqot uchun qarang
+`app/llm/ollama_client.py`ning docstring'i). Bu model imkoniyatining
+cheklovi, pipeline xatosi emas — amalda buni ko'rsangiz, kattaroq
+model (`qwen2.5:7b` yoki shunga o'xshash, RAM imkon bergancha) yoki
+`LLM_PROVIDER=gemini`ga o'tish to'g'ridan-to'g'ri yechim.

@@ -117,7 +117,6 @@ from __future__ import annotations
 
 import io
 from pathlib import Path
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -141,6 +140,12 @@ _TXT_ENCODING_FALLBACKS = ("utf-8-sig", "utf-8", "windows-1251", "latin-1")
 _OCR_MIN_TEXT_CHARS = 10
 
 SUPPORTED_EXTENSIONS = {".pdf", ".docx", ".txt", ".html", ".htm"}
+
+# Extra formats accepted only for one-off document ANALYSIS (the "+" upload
+# button), never for the corpus indexing scan (`IndexingPipeline.sync()`
+# walks `SUPPORTED_EXTENSIONS` above, which must stay law-text-only — a
+# user's photographed contract is not a law to index and search).
+ANALYSIS_SUPPORTED_EXTENSIONS = SUPPORTED_EXTENSIONS | {".jpg", ".jpeg", ".png"}
 
 
 class LoadedDocument(BaseModel):
@@ -181,7 +186,7 @@ def load_txt(path: Path) -> list[str]:
     Returns a single-element page list (TXT has no pagination concept).
     """
     raw_bytes = path.read_bytes()
-    last_error: Optional[UnicodeDecodeError] = None
+    last_error: UnicodeDecodeError | None = None
 
     for encoding in _TXT_ENCODING_FALLBACKS:
         try:
@@ -195,9 +200,7 @@ def load_txt(path: Path) -> list[str]:
 
     # latin-1 can decode any byte sequence, so reaching here should be
     # impossible — kept as a defensive guard, not a reachable branch.
-    raise CorruptedDocumentError(
-        f"Could not decode {path} with any known encoding: {last_error}"
-    )
+    raise CorruptedDocumentError(f"Could not decode {path} with any known encoding: {last_error}")
 
 
 # --------------------------------------------------------------------------
@@ -277,8 +280,7 @@ def _ocr_page_image(page, warnings: list[str]) -> str:
         from PIL import Image
     except ImportError:
         warnings.append(
-            "OCR dependencies (pytesseract/Pillow) not installed; "
-            "scanned page(s) yielded no text."
+            "OCR dependencies (pytesseract/Pillow) not installed; " "scanned page(s) yielded no text."
         )
         return ""
 
@@ -300,7 +302,7 @@ def _ocr_page_image(page, warnings: list[str]) -> str:
         return ""
 
 
-def load_pdf(path: Path, warnings: Optional[list[str]] = None) -> list[str]:
+def load_pdf(path: Path, warnings: list[str] | None = None) -> list[str]:
     """Extract text per page, falling back to OCR for pages with no text layer."""
     try:
         import fitz  # PyMuPDF
@@ -327,14 +329,53 @@ def load_pdf(path: Path, warnings: Optional[list[str]] = None) -> list[str]:
         page = doc.load_page(page_index)
         text = page.get_text()
         if len(text.strip()) < _OCR_MIN_TEXT_CHARS:
-            logger.info(
-                "Page %d of %s has no usable text layer; attempting OCR", page_index + 1, path
-            )
+            logger.info("Page %d of %s has no usable text layer; attempting OCR", page_index + 1, path)
             text = _ocr_page_image(page, warnings)
         pages.append(text)
 
     doc.close()
     return pages
+
+
+# --------------------------------------------------------------------------
+# Image (standalone JPEG/PNG, e.g. a photographed contract) — analysis only
+# --------------------------------------------------------------------------
+
+
+def load_image(path: Path, warnings: list[str] | None = None) -> list[str]:
+    """OCR a standalone image file. Returns a single-element page list.
+
+    Reuses the exact OCR call `_ocr_page_image` makes for scanned PDF
+    pages, applied directly to the uploaded image instead of a rendered
+    PDF page — same dependencies (`pytesseract`/`Pillow`), same graceful
+    "no OCR available" degradation (empty text + a warning, not a crash).
+    """
+    if warnings is None:
+        warnings = []
+
+    try:
+        import pytesseract
+        from PIL import Image
+    except ImportError:
+        warnings.append(
+            "OCR dependencies (pytesseract/Pillow) not installed; image yielded no text."
+        )
+        return [""]
+
+    try:
+        image = Image.open(path)
+        text = pytesseract.image_to_string(image, lang="eng")
+    except pytesseract.TesseractNotFoundError:
+        warnings.append(
+            "Tesseract binary not found on PATH; image yielded no text. "
+            "Install it (e.g. `brew install tesseract`) to enable OCR."
+        )
+        return [""]
+    except Exception as e:  # noqa: BLE001 - OCR failures are recoverable, not fatal
+        warnings.append(f"OCR failed on {path.name}: {e}")
+        return [""]
+
+    return [text]
 
 
 # --------------------------------------------------------------------------
@@ -348,6 +389,33 @@ _LOADERS = {
     ".htm": load_html,
 }
 
+_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
+
+
+def load_for_analysis(path: Path) -> LoadedDocument:
+    """Like `load_document`, but also accepts standalone images (OCR'd via
+    `load_image`) — the wider set a document-ANALYSIS upload accepts,
+    versus the law-corpus-only `SUPPORTED_EXTENSIONS` `load_document` is
+    restricted to. See `ANALYSIS_SUPPORTED_EXTENSIONS`'s docstring.
+    """
+    suffix = path.suffix.lower()
+    if suffix not in _IMAGE_EXTENSIONS:
+        return load_document(path)
+
+    warnings: list[str] = []
+    logger.info("Loading image for analysis: %s", path)
+    raw_pages = load_image(path, warnings=warnings)
+    cleaned_pages = [clean_text(p) for p in raw_pages]
+
+    if not any(p.strip() for p in cleaned_pages):
+        raise EmptyDocumentError(f"{path} contained no extractable text after OCR.")
+
+    doc = LoadedDocument(file_path=str(path), file_type="image", pages=cleaned_pages, warnings=warnings)
+    logger.info(
+        "Loaded %s: %d characters, %d warning(s)", path, doc.char_count, len(doc.warnings)
+    )
+    return doc
+
 
 def load_document(path: Path) -> LoadedDocument:
     """Load any supported file into a cleaned, uniform `LoadedDocument`.
@@ -359,8 +427,7 @@ def load_document(path: Path) -> LoadedDocument:
     suffix = path.suffix.lower()
     if suffix not in SUPPORTED_EXTENSIONS:
         raise UnsupportedFileTypeError(
-            f"Unsupported file type '{suffix}' for {path}. "
-            f"Supported: {sorted(SUPPORTED_EXTENSIONS)}"
+            f"Unsupported file type '{suffix}' for {path}. " f"Supported: {sorted(SUPPORTED_EXTENSIONS)}"
         )
 
     warnings: list[str] = []

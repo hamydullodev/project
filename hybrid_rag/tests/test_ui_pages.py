@@ -110,14 +110,27 @@ def test_home_page_reflects_repo_stats(isolated_repo):
 
     isolated_repo.upsert_document(
         DocumentRecord(
-            id="doc-1", file_name="test.txt", file_path="/fake/test.txt", file_type="txt",
-            law_name="Test kodeksi", file_hash="h1", file_size_bytes=100,
+            id="doc-1",
+            file_name="test.txt",
+            file_path="/fake/test.txt",
+            file_type="txt",
+            law_name="Test kodeksi",
+            file_hash="h1",
+            file_size_bytes=100,
         )
     )
     isolated_repo.replace_chunks(
         "doc-1",
-        [ChunkRecord(id="doc-1::00000", document_id="doc-1", chunk_index=0, text="matn",
-                     char_count=4, law_name="Test kodeksi")],
+        [
+            ChunkRecord(
+                id="doc-1::00000",
+                document_id="doc-1",
+                chunk_index=0,
+                text="matn",
+                char_count=4,
+                law_name="Test kodeksi",
+            )
+        ],
     )
 
     at = AppTest.from_file(str(PAGES_DIR / "home.py"))
@@ -202,8 +215,13 @@ def test_navigation_registry_covers_every_page_module():
     titles = {p._title for p in all_pages}
 
     required = {
-        "Bosh sahifa", "Suhbat", "Hujjat yuklash", "Indeksni boshqarish",
-        "Qidiruv tahlili", "Statistika", "Sozlamalar",
+        "Bosh sahifa",
+        "Suhbat",
+        "Hujjat yuklash",
+        "Indeksni boshqarish",
+        "Qidiruv tahlili",
+        "Statistika",
+        "Sozlamalar",
     }
     assert required.issubset(titles)
 

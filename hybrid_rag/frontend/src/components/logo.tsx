@@ -7,7 +7,7 @@ export function Logo() {
     <Link href="/" className="flex items-center gap-2.5 outline-none">
       <BrandMark className="size-8" />
       <span className="hidden text-sm font-semibold tracking-tight sm:inline">
-        Qonun AI
+        UzLaw AI
       </span>
     </Link>
   );

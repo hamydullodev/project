@@ -132,7 +132,6 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 
@@ -161,7 +160,7 @@ class FAISSVectorStore:
     attribute exists to prevent.
     """
 
-    def __init__(self, dimension: int, path: Optional[Path] = None) -> None:
+    def __init__(self, dimension: int, path: Path | None = None) -> None:
         import faiss
 
         self.dimension = dimension
@@ -260,7 +259,7 @@ class FAISSVectorStore:
 
     # -- persistence --------------------------------------------------------------
 
-    def save(self, path: Optional[Path] = None) -> None:
+    def save(self, path: Path | None = None) -> None:
         """Persist the FAISS index and id mapping to disk.
 
         Writes to temporary files in the same directory and renames them
@@ -295,7 +294,7 @@ class FAISSVectorStore:
         logger.info("Saved FAISS index (%d vectors) to %s", len(self), index_path)
 
     @classmethod
-    def load(cls, path: Optional[Path] = None) -> "FAISSVectorStore":
+    def load(cls, path: Path | None = None) -> FAISSVectorStore:
         """Load a previously-saved index + id mapping from disk.
 
         Raises `VectorStoreError` (not a raw faiss/JSON exception) if
@@ -311,9 +310,7 @@ class FAISSVectorStore:
         index_path, meta_path = cls._resolve_paths_static(path)
 
         if not index_path.exists() or not meta_path.exists():
-            raise VectorStoreError(
-                f"FAISS index files not found at {index_path} / {meta_path}"
-            )
+            raise VectorStoreError(f"FAISS index files not found at {index_path} / {meta_path}")
 
         try:
             index = faiss.read_index(str(index_path))
@@ -328,8 +325,7 @@ class FAISSVectorStore:
         required_keys = {"dimension", "next_id", "chunk_id_to_int"}
         if not required_keys.issubset(meta):
             raise VectorStoreError(
-                f"Index metadata at {meta_path} is missing required keys: "
-                f"{required_keys - meta.keys()}"
+                f"Index metadata at {meta_path} is missing required keys: " f"{required_keys - meta.keys()}"
             )
 
         if meta["dimension"] != index.d:
@@ -341,7 +337,7 @@ class FAISSVectorStore:
         store = cls.__new__(cls)
         store.dimension = meta["dimension"]
         store.path = path
-        store._index = index
+        store._index = index  # type: ignore[assignment]  # faiss.read_index()'s stub returns the generic Index base type; this file was always written as an IndexIDMap by this same class
         store._next_id = meta["next_id"]
         store._chunk_id_to_int = {k: int(v) for k, v in meta["chunk_id_to_int"].items()}
         store._int_to_chunk_id = {v: k for k, v in store._chunk_id_to_int.items()}
@@ -356,9 +352,9 @@ class FAISSVectorStore:
         return store
 
     @staticmethod
-    def _resolve_paths_static(path: Optional[Path]) -> tuple[Path, Path]:
+    def _resolve_paths_static(path: Path | None) -> tuple[Path, Path]:
         base = path or settings.vector_path_resolved
         return Path(str(base) + ".faiss"), Path(str(base) + ".meta.json")
 
-    def _resolve_paths(self, path: Optional[Path]) -> tuple[Path, Path]:
+    def _resolve_paths(self, path: Path | None) -> tuple[Path, Path]:
         return self._resolve_paths_static(path or self.path)

@@ -59,7 +59,7 @@ represent since it doesn't know about that server-side work at all.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 import streamlit as st
 from pydantic import BaseModel
@@ -77,9 +77,9 @@ class UploadOutcome(BaseModel):
 
     file_name: str
     status: Literal["saved", "failed", "rejected"]
-    error: Optional[str] = None
+    error: str | None = None
     overwritten: bool = False
-    size_bytes: Optional[int] = None
+    size_bytes: int | None = None
 
 
 def render() -> None:
@@ -175,9 +175,7 @@ def _show_results(results: list[UploadOutcome]) -> None:
 
     if saved:
         st.divider()
-        st.info(
-            "Yuklangan hujjatlarni qidiruvga qoʻshish uchun quyidagi sahifaga oʻting:"
-        )
+        st.info("Yuklangan hujjatlarni qidiruvga qoʻshish uchun quyidagi sahifaga oʻting:")
         # Deferred import to avoid a circular import with app.ui.navigation
         # (which imports this module's `render` to build its own st.Page
         # object) — see navigation.py's module docstring, and home.py for

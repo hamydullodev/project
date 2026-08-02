@@ -1,0 +1,7 @@
+# Development-only tooling — not needed to run the app, only to develop it.
+# Install alongside requirements.txt: pip install -r requirements-dev.txt
+
+ruff>=0.6
+black>=24.0
+isort>=5.13
+mypy>=1.10

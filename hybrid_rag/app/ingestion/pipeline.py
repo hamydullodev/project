@@ -143,11 +143,11 @@ from __future__ import annotations
 import time
 import uuid
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel
 
-from app.config import settings
+from app.config import derive_collection, settings
 from app.database import ChunkRecord, DocumentRecord, MetadataRepository
 from app.ingestion.chunker import chunk_document
 from app.ingestion.exceptions import DocumentLoadError
@@ -171,11 +171,11 @@ DocumentOutcomeStatus = Literal["indexed", "skipped_unchanged", "skipped_duplica
 class DocumentIndexOutcome(BaseModel):
     """What happened to one file during a `sync()` call."""
 
-    document_id: Optional[str]
+    document_id: str | None
     file_path: str
     status: DocumentOutcomeStatus
     num_chunks: int = 0
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class IndexingSummary(BaseModel):
@@ -196,10 +196,10 @@ class IndexingPipeline:
 
     def __init__(
         self,
-        repo: Optional[MetadataRepository] = None,
-        embedding_model: Optional[EmbeddingModel] = None,
-        vector_store: Optional[FAISSVectorStore] = None,
-        bm25_index: Optional[BM25SparseIndex] = None,
+        repo: MetadataRepository | None = None,
+        embedding_model: EmbeddingModel | None = None,
+        vector_store: FAISSVectorStore | None = None,
+        bm25_index: BM25SparseIndex | None = None,
     ) -> None:
         self.repo = repo or MetadataRepository()
         self.embedding_model = embedding_model or get_default_embedding_model()
@@ -232,7 +232,7 @@ class IndexingPipeline:
 
     # -- public operations --------------------------------------------------------
 
-    def sync(self, directory: Optional[Path] = None) -> IndexingSummary:
+    def sync(self, directory: Path | None = None) -> IndexingSummary:
         """Index every new/changed file under `directory`; skip unchanged ones.
 
         Always safe to call repeatedly — see module docstring for why
@@ -254,7 +254,7 @@ class IndexingPipeline:
                 self.repo.count_chunks(),
             )
 
-        outcomes = [self._sync_one_file(path, needs_vector_repopulation) for path in files]
+        outcomes = [self._sync_one_file(path, needs_vector_repopulation, directory) for path in files]
 
         self._rebuild_bm25_index()
         self._save_indexes()
@@ -282,7 +282,7 @@ class IndexingPipeline:
         )
         return summary
 
-    def rebuild(self, directory: Optional[Path] = None) -> IndexingSummary:
+    def rebuild(self, directory: Path | None = None) -> IndexingSummary:
         """Wipe all indexes and metadata, then re-index everything from scratch."""
         logger.warning("Rebuilding index from scratch: all existing metadata/vectors will be wiped.")
         self.delete_all()
@@ -319,7 +319,7 @@ class IndexingPipeline:
 
     # -- internals ------------------------------------------------------------------
 
-    def _sync_one_file(self, path: Path, force_repopulate: bool) -> DocumentIndexOutcome:
+    def _sync_one_file(self, path: Path, force_repopulate: bool, scan_root: Path) -> DocumentIndexOutcome:
         try:
             file_hash = compute_sha256(path)
         except OSError as e:
@@ -356,7 +356,9 @@ class IndexingPipeline:
                 error_message=f"Duplicate content of already-indexed '{existing_by_hash.file_name}'",
             )
 
-        return self._process_file(path, document_id, file_hash, is_update=existing_by_path is not None)
+        return self._process_file(
+            path, document_id, file_hash, is_update=existing_by_path is not None, scan_root=scan_root
+        )
 
     def _repopulate_vectors_from_stored_chunks(self, doc: DocumentRecord) -> DocumentIndexOutcome:
         """Re-embed and re-add vectors for a document whose text hasn't changed.
@@ -374,20 +376,20 @@ class IndexingPipeline:
         )
 
     def _process_file(
-        self, path: Path, document_id: str, file_hash: str, is_update: bool
+        self, path: Path, document_id: str, file_hash: str, is_update: bool, scan_root: Path
     ) -> DocumentIndexOutcome:
         try:
             loaded_doc = load_document(path)
             chunk_drafts = chunk_document(loaded_doc, file_name=path.name)
         except DocumentLoadError as e:
             logger.error("Failed to load/chunk %s: %s", path, e)
-            self._record_failed_document(path, document_id, file_hash, str(e))
+            self._record_failed_document(path, document_id, file_hash, str(e), scan_root)
             return DocumentIndexOutcome(
                 document_id=document_id, file_path=str(path), status="failed", error_message=str(e)
             )
         except Exception as e:  # noqa: BLE001 - one bad file must not abort the whole batch
             logger.exception("Unexpected error processing %s", path)
-            self._record_failed_document(path, document_id, file_hash, f"Unexpected error: {e}")
+            self._record_failed_document(path, document_id, file_hash, f"Unexpected error: {e}", scan_root)
             return DocumentIndexOutcome(
                 document_id=document_id, file_path=str(path), status="failed", error_message=str(e)
             )
@@ -396,8 +398,17 @@ class IndexingPipeline:
             old_chunks = self.repo.get_chunks_for_document(document_id)
             self.vector_store.remove([c.id for c in old_chunks])
 
+        collection_category, collection_id, collection_title = derive_collection(path, scan_root)
+
         chunk_records = [
-            ChunkRecord(id=ChunkRecord.make_id(document_id, d.chunk_index), document_id=document_id, **d.model_dump())
+            ChunkRecord(
+                id=ChunkRecord.make_id(document_id, d.chunk_index),
+                document_id=document_id,
+                collection_id=collection_id,
+                collection_category=collection_category,
+                collection_title=collection_title,
+                **d.model_dump(),
+            )
             for d in chunk_drafts
         ]
         law_name = chunk_drafts[0].law_name if chunk_drafts else None
@@ -409,6 +420,9 @@ class IndexingPipeline:
                 file_path=str(path),
                 file_type=loaded_doc.file_type,
                 law_name=law_name,
+                collection_id=collection_id,
+                collection_category=collection_category,
+                collection_title=collection_title,
                 file_hash=file_hash,
                 file_size_bytes=path.stat().st_size,
                 num_chunks=len(chunk_records),
@@ -425,13 +439,19 @@ class IndexingPipeline:
             document_id=document_id, file_path=str(path), status="indexed", num_chunks=len(chunk_records)
         )
 
-    def _record_failed_document(self, path: Path, document_id: str, file_hash: str, error: str) -> None:
+    def _record_failed_document(
+        self, path: Path, document_id: str, file_hash: str, error: str, scan_root: Path
+    ) -> None:
+        collection_category, collection_id, collection_title = derive_collection(path, scan_root)
         self.repo.upsert_document(
             DocumentRecord(
                 id=document_id,
                 file_name=path.name,
                 file_path=str(path),
                 file_type=path.suffix.lstrip(".").lower() or "unknown",
+                collection_id=collection_id,
+                collection_category=collection_category,
+                collection_title=collection_title,
                 file_hash=file_hash,
                 file_size_bytes=path.stat().st_size if path.exists() else 0,
                 status="failed",
