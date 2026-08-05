@@ -1,0 +1,16 @@
+.git
+.gitignore
+.venv
+venv
+delivery_drone
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+logs/*.log
+tests
+docs
+*.md
+.env
+.DS_Store
+AI Travel Agent Project.pdf

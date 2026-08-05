@@ -1,0 +1,17 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+# A practical, uncontroversial set: pyflakes, pycodestyle errors, import
+# sorting, and pyupgrade. Deliberately not enabling stricter/opinionated
+# rule families (e.g. flake8-datetimez, pylint) that would demand a much
+# larger refactor for no functional benefit to this project.
+select = ["E", "F", "I", "UP"]
+# UP042 (str+Enum -> StrEnum) is skipped deliberately: swapping the enum
+# base class is a behavior-risk change (str()/repr() semantics differ
+# subtly) for a purely cosmetic lint win.
+ignore = ["UP042"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
