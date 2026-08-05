@@ -1,0 +1,41 @@
+# --- Environment & Secrets ---------------------------------------------------
+.env
+.env.local
+*.pem
+
+# --- Python --------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# --- Streamlit -----------------------------------------------------------
+.streamlit/secrets.toml
+
+# --- Testing / Coverage ---------------------------------------------------
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Logs & Cache ----------------------------------------------------------
+logs/*.log
+.cache/
+*.sqlite3
+
+# --- Editors / OS ----------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Unrelated sibling project (not part of Avia AI) ------------------------
+delivery_drone/
+
+# --- Course assignment brief (not project source) ---------------------------
+AI Travel Agent Project.pdf
