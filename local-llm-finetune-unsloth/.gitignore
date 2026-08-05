@@ -1,0 +1,33 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# model weights & checkpoints (never commit these)
+models/base/*
+!models/base/.gitkeep
+models/adapters/*
+!models/adapters/.gitkeep
+outputs/
+checkpoints/
+*.gguf
+*.safetensors
+*.bin
+
+# datasets (keep small seed samples only, ignore large downloads)
+data/raw/*
+!data/raw/.gitkeep
+!data/raw/README.md
+
+# logs
+wandb/
+logs/
+*.log
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/

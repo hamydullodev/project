@@ -1,0 +1,33 @@
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+exclude = [".venv", "indexes", "data", "logs", "notebooks", "frontend"]
+
+[tool.ruff.lint]
+# E/F/I/UP catch real errors, unused code, and syntax modernization — all
+# safely auto-fixable and enforced in CI. `B` (bugbear) and `SIM`
+# (simplify) are deliberately left unselected: they're solid style
+# suggestions but a few flag idiomatic framework patterns as issues (e.g.
+# B008 on FastAPI's `Depends(...)` default-argument pattern, which is
+# correct there, not a bug) — worth reading with `ruff check --select B,SIM`
+# locally, not worth enforcing as a CI gate on existing pipeline code.
+select = ["E", "F", "I", "UP"]
+ignore = [
+    "E501", # line length — handled by black/ruff format, not worth failing CI over
+]
+
+[tool.black]
+line-length = 110
+target-version = ["py311", "py312"]
+extend-exclude = "(\\.venv|indexes|data|logs|notebooks|frontend)/"
+
+[tool.isort]
+profile = "black"
+line_length = 110
+skip_glob = [".venv/*", "indexes/*", "data/*", "logs/*", "frontend/*", "notebooks/*"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+warn_unused_ignores = true
+exclude = ["^\\.venv/", "^tests/"]

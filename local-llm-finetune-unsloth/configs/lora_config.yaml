@@ -1,0 +1,40 @@
+# LoRA fine-tuning config — full precision (bf16/fp16) base weights + LoRA adapters.
+# Needs more VRAM than QLoRA but trains slightly faster and has marginally better quality.
+mode: lora
+
+load_in_4bit: false
+load_in_8bit: false
+
+lora:
+  r: 16                 # adapter rank — capacity of the adapter. 8-16 for small/simple tasks, 32-64 for complex domain adaptation
+  lora_alpha: 16         # scaling factor, commonly set equal to r (alpha/r = 1) or 2x r
+  lora_dropout: 0.0      # Unsloth's fast path is optimized for 0; use 0.05 if you see overfitting
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  bias: none
+  use_gradient_checkpointing: unsloth  # Unsloth's custom checkpointing saves ~30% VRAM
+  random_state: 3407
+
+training:
+  output_dir: outputs/lora
+  num_train_epochs: 3
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 4   # effective batch size = per_device_batch_size * grad_accum = 8
+  learning_rate: 2.0e-4
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.03
+  weight_decay: 0.01
+  optim: adamw_8bit
+  max_grad_norm: 0.3
+  logging_steps: 10
+  save_strategy: epoch
+  eval_strategy: epoch
+  seed: 3407
+  packing: false          # pack multiple short examples per sequence for throughput (set true for large datasets)
+  bf16: true               # use bf16 on Ampere+ GPUs; fp16 otherwise

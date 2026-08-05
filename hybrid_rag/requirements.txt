@@ -1,0 +1,70 @@
+# ============================================================================
+# Hybrid RAG for Uzbek Law — dependency list
+#
+# Grouped by role in the pipeline so it's obvious *why* each package is here.
+# Versions are floor-pinned (>=) rather than exact-pinned: this is a local,
+# single-machine educational project, so we favor "get the latest compatible
+# build" over reproducible-to-the-patch-version installs. If you need fully
+# reproducible installs later, freeze this with `pip freeze > requirements.lock.txt`.
+# ============================================================================
+
+# --- Core config / validation ------------------------------------------------
+pydantic>=2.7
+pydantic-settings>=2.3
+python-dotenv>=1.0
+
+# --- Orchestration (text splitters, document schema, prompt templates) ------
+langchain>=0.2
+langchain-community>=0.2
+langchain-huggingface>=0.0.3
+langchain-text-splitters>=0.2
+
+# --- Embeddings & reranking (local, HuggingFace-hosted weights) -------------
+sentence-transformers>=3.0
+transformers>=4.42
+torch>=2.3
+
+# --- Dense vector index -------------------------------------------------------
+faiss-cpu>=1.8
+
+# --- Sparse (lexical) index ---------------------------------------------------
+rank_bm25>=0.2.2
+
+# --- LLM providers --------------------------------------------------------------
+ollama>=0.2             # local LLM (LLM_PROVIDER=ollama)
+google-genai>=1.0        # hosted Gemini LLM (LLM_PROVIDER=gemini)
+
+# --- Document parsing ----------------------------------------------------------
+pymupdf>=1.24          # PDF text/layout extraction AND page rendering for OCR fallback
+python-docx>=1.1        # DOCX parsing
+beautifulsoup4>=4.12    # HTML parsing
+lxml>=5.2                # fast HTML/XML parser backend for bs4
+pytesseract>=0.3.10      # OCR (requires system Tesseract binary: `brew install tesseract`)
+Pillow>=10.0              # image handling for the OCR fallback (PyMuPDF pixmap -> PIL -> pytesseract)
+
+# --- Storage --------------------------------------------------------------------
+# sqlite3 ships with the Python standard library — no package needed.
+
+# --- UI -----------------------------------------------------------------------
+streamlit>=1.36            # internal/debug UI: Index management, Retrieval Debug, Statistics
+
+# --- API (backend for the Next.js frontend) -----------------------------------
+fastapi>=0.115
+uvicorn[standard]>=0.30    # ASGI server; [standard] pulls in uvloop/httptools for real speed
+python-multipart>=0.0.9    # required by FastAPI's UploadFile (POST /api/analyze-document)
+
+# --- Numerics / utilities -------------------------------------------------------
+numpy>=1.26
+pandas>=2.2
+tqdm>=4.66
+
+# --- Testing & evaluation --------------------------------------------------------
+pytest>=8.2
+scikit-learn>=1.5       # ranking-metric helpers used in retrieval evaluation
+httpx>=0.27              # required by FastAPI's TestClient (tests/test_api.py)
+
+# --- Optional: advanced layout-aware parsing ---------------------------------
+# Docling gives much better structure extraction for complex PDFs (tables,
+# multi-column layouts) than PyMuPDF alone, at the cost of a heavier install
+# and slower parsing. Uncomment if you ingest visually complex PDFs.
+# docling>=2.0

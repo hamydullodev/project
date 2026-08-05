@@ -1,0 +1,252 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-gradient-from: var(--gradient-from);
+  --color-gradient-to: var(--gradient-to);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+ * Design tokens for the "premium AI product" aesthetic (ChatGPT/Claude/
+ * Perplexity/Linear/Vercel/Raycast-grade) - a refined indigo-violet accent
+ * over a neutral surface, deliberately never pure black in dark mode (a
+ * true #000 background flattens depth and reads as unfinished; a dark
+ * surface with a faint blue-violet undertone lets card elevation actually
+ * read as elevation). --gradient-from/--gradient-to are extra tokens (not
+ * part of shadcn's own convention) for the hero/button glow accents this
+ * project's components use on top of the standard palette below.
+ */
+:root {
+  --background: #ffffff;
+  --foreground: #0f1117;
+  --card: #ffffff;
+  --card-foreground: #0f1117;
+  --popover: #ffffff;
+  --popover-foreground: #0f1117;
+  --primary: #5b4fe9;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f2fa;
+  --secondary-foreground: #0f1117;
+  --muted: #f5f5f8;
+  --muted-foreground: #6b7280;
+  --accent: #eef0ff;
+  --accent-foreground: #3730a3;
+  --destructive: #dc2626;
+  --border: #e5e5ea;
+  --input: #e5e5ea;
+  --ring: #5b4fe9;
+  --chart-1: #5b4fe9;
+  --chart-2: #4f8ef7;
+  --chart-3: #8b5cf6;
+  --chart-4: #22c55e;
+  --chart-5: #f59e0b;
+  --radius: 0.75rem;
+  --gradient-from: #6d5ef0;
+  --gradient-to: #4f8ef7;
+  --sidebar: #fafafc;
+  --sidebar-foreground: #0f1117;
+  --sidebar-primary: #5b4fe9;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eef0ff;
+  --sidebar-accent-foreground: #3730a3;
+  --sidebar-border: #e5e5ea;
+  --sidebar-ring: #5b4fe9;
+}
+
+.dark {
+  --background: #0b0b12;
+  --foreground: #f2f2f7;
+  --card: #131320;
+  --card-foreground: #f2f2f7;
+  --popover: #131320;
+  --popover-foreground: #f2f2f7;
+  --primary: #7c6ff0;
+  --primary-foreground: #0b0b12;
+  --secondary: #1a1a28;
+  --secondary-foreground: #f2f2f7;
+  --muted: #17171f;
+  --muted-foreground: #9a99ac;
+  --accent: #1d1b33;
+  --accent-foreground: #c7c2ff;
+  --destructive: #f87171;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #7c6ff0;
+  --chart-1: #7c6ff0;
+  --chart-2: #4f8ef7;
+  --chart-3: #a78bfa;
+  --chart-4: #4ade80;
+  --chart-5: #fbbf24;
+  --gradient-from: #7c6ff0;
+  --gradient-to: #4f8ef7;
+  --sidebar: #101018;
+  --sidebar-foreground: #f2f2f7;
+  --sidebar-primary: #7c6ff0;
+  --sidebar-primary-foreground: #0b0b12;
+  --sidebar-accent: #1d1b33;
+  --sidebar-accent-foreground: #c7c2ff;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #7c6ff0;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+    scroll-behavior: smooth;
+  }
+}
+
+/*
+ * Ambient hero background blobs — large, slow-drifting, blurred gradient
+ * shapes behind the home hero for depth (the "glassmorphism" ask). Purely
+ * decorative, so the drift animation is opt-out via `prefers-reduced-
+ * motion` here at the CSS level (belt-and-braces alongside the
+ * `useReducedMotion()` gating on any Framer Motion loops in components).
+ */
+@keyframes ambient-drift-a {
+  0%,
+  100% {
+    transform: translate(-8%, -6%) scale(1);
+  }
+  50% {
+    transform: translate(6%, 4%) scale(1.12);
+  }
+}
+@keyframes ambient-drift-b {
+  0%,
+  100% {
+    transform: translate(8%, 6%) scale(1.08);
+  }
+  50% {
+    transform: translate(-6%, -8%) scale(1);
+  }
+}
+.animate-ambient-a {
+  animation: ambient-drift-a 18s ease-in-out infinite;
+}
+.animate-ambient-b {
+  animation: ambient-drift-b 22s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-ambient-a,
+  .animate-ambient-b {
+    animation: none;
+  }
+}
+
+/*
+ * Button ripple — a plain CSS keyframe (no library) triggered by a JS
+ * positioner (`lib/ripple.ts`) that mounts a `.ripple-dot` span at the
+ * pointer's coordinates on click and removes it after the animation
+ * completes.
+ */
+@keyframes ripple-expand {
+  from {
+    transform: scale(0);
+    opacity: 0.45;
+  }
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+.ripple-dot {
+  position: absolute;
+  border-radius: 9999px;
+  background: currentColor;
+  pointer-events: none;
+  transform-origin: center;
+  animation: ripple-expand 600ms ease-out forwards;
+}
+
+/*
+ * Print styles for the result card's "PDF" action (`window.print()` —
+ * see result-card.tsx's docstring for why this beats a client-side PDF
+ * library here). Anything not explicitly part of the printable answer
+ * is hidden; the printable area itself is reset to plain black-on-white
+ * flow content regardless of the active theme.
+ */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    color: #000;
+    background: #fff;
+  }
+}
+
+/* react-markdown output styling — dark-aware via the typography plugin's own `dark:prose-invert`, kept tight (text-[15px]) to match the rest of the result card rather than the plugin's default prose sizing. */
+.markdown-answer {
+  --tw-prose-body: var(--foreground);
+  --tw-prose-headings: var(--foreground);
+  --tw-prose-bold: var(--foreground);
+  --tw-prose-links: var(--primary);
+  --tw-prose-bullets: var(--muted-foreground);
+  --tw-prose-hr: var(--border);
+  --tw-prose-quotes: var(--foreground);
+  --tw-prose-quote-borders: var(--border);
+  --tw-prose-code: var(--foreground);
+  --tw-prose-pre-bg: var(--muted);
+  --tw-prose-pre-code: var(--foreground);
+  --tw-prose-th-borders: var(--border);
+  --tw-prose-td-borders: var(--border);
+}
