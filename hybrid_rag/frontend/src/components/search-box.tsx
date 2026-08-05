@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, FileText, Loader2, Plus, Search, X } from "lucide-react";
+import { ArrowRight, FileText, Loader2, Mic, MicOff, Plus, Search, X } from "lucide-react";
 
+import { useAudioTranscription } from "@/hooks/use-audio-transcription";
 import { spawnRipple } from "@/lib/ripple";
 import { cn } from "@/lib/utils";
 
@@ -68,6 +69,13 @@ export function SearchBox({
     setIsMac(/Mac|iPhone|iPad/.test(navigator.platform ?? navigator.userAgent));
   }, []);
 
+  const speech = useAudioTranscription({
+    onResult: (transcript) => {
+      onValueChange(value ? `${value} ${transcript}` : transcript);
+      inputRef.current?.focus();
+    },
+  });
+
   React.useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
@@ -118,6 +126,36 @@ export function SearchBox({
         >
           <Plus className="size-4" aria-hidden="true" />
         </button>
+        {speech.supported ? (
+          <button
+            type="button"
+            onClick={() => (speech.listening ? speech.stop() : speech.start())}
+            disabled={speech.transcribing}
+            aria-label={speech.listening ? "Ovozli kiritishni to'xtatish" : "Ovoz orqali so'rash"}
+            title={
+              speech.transcribing
+                ? "Matnga o'girilmoqda..."
+                : speech.listening
+                  ? "Ovozli kiritishni to'xtatish"
+                  : "Ovoz orqali so'rash"
+            }
+            className={cn(
+              "flex size-8 shrink-0 items-center justify-center rounded-full border transition-colors",
+              "disabled:cursor-not-allowed disabled:opacity-60",
+              speech.listening
+                ? "border-transparent bg-red-500 text-white"
+                : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground",
+            )}
+          >
+            {speech.transcribing ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+            ) : speech.listening ? (
+              <MicOff className="size-4" aria-hidden="true" />
+            ) : (
+              <Mic className="size-4" aria-hidden="true" />
+            )}
+          </button>
+        ) : null}
         <Search className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
         <input
           ref={inputRef}

@@ -22,7 +22,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.config import get_api_settings
-from api.routers import analyze, ask, collections, health
+from api.routers import analyze, ask, collections, health, transcribe
 
 api_settings = get_api_settings()
 
@@ -44,6 +44,7 @@ app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(ask.router, prefix="/api", tags=["ask"])
 app.include_router(collections.router, prefix="/api", tags=["collections"])
 app.include_router(analyze.router, prefix="/api", tags=["analyze"])
+app.include_router(transcribe.router, prefix="/api", tags=["transcribe"])
 
 
 @app.get("/")

@@ -1,8 +1,25 @@
 import { API_BASE_URL } from "@/lib/config";
-import type { AnalysisInfo, Source } from "@/lib/types";
+import type { AnalysisInfo, Source, WebSource } from "@/lib/types";
 
 export interface AskStreamHandlers {
   onSources?: (query: string, sources: Source[]) => void;
+  onToken?: (text: string) => void;
+  onDone?: (answerFound: boolean) => void;
+  onError?: (message: string) => void;
+}
+
+/** `POST /api/agent/ask`'s `event: sources` payload — legal (RAG) and web sources, plus which tools ran. */
+export interface AgentSourcesPayload {
+  query: string;
+  legal_sources: Source[];
+  web_sources: WebSource[];
+  used_rag: boolean;
+  used_web: boolean;
+  route_reason: string;
+}
+
+export interface AgentAskStreamHandlers {
+  onSources?: (payload: AgentSourcesPayload) => void;
   onToken?: (text: string) => void;
   onDone?: (answerFound: boolean) => void;
   onError?: (message: string) => void;
@@ -55,6 +72,43 @@ export async function streamAsk(
   await consumeSSEResponse(response, (rawEvent) => dispatchAskEvent(rawEvent, handlers), handlers.onError);
 }
 
+/** One prior turn sent as `history` to `/api/agent/ask` — mirrors `api/schemas.py`'s `ChatTurn`. */
+export interface ChatHistoryTurn {
+  role: "user" | "assistant";
+  content: string;
+}
+
+/**
+ * POST `/api/agent/ask` and parse its SSE response — same event-stream shape as
+ * `streamAsk` (`sources`/`token`/`done`/`error`), except `sources` carries BOTH
+ * `legal_sources` (Hybrid RAG) and `web_sources` (search_web), since the tool-calling
+ * agent behind this endpoint can use either or both per query (see
+ * `app/agents/legal_agent.py`, `api/routers/agent.py`).
+ *
+ * `history`, when given, is the chat session's prior turns (oldest first) — lets a
+ * follow-up question resolve context from earlier answers in the same conversation
+ * (`useChat`, `app/agents/legal_agent.py`'s `build_agent_messages`).
+ */
+export async function streamAgentAsk(
+  query: string,
+  handlers: AgentAskStreamHandlers,
+  signal?: AbortSignal,
+  history?: ChatHistoryTurn[],
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/agent/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query, history: history && history.length > 0 ? history : undefined }),
+    signal,
+  });
+
+  await consumeSSEResponse(
+    response,
+    (rawEvent) => dispatchAgentAskEvent(rawEvent, handlers),
+    handlers.onError,
+  );
+}
+
 /**
  * POST `/api/analyze-document` (a `File`, as `multipart/form-data`) and
  * parse the SSE response — same event-stream shape and same reasoning
@@ -83,6 +137,31 @@ export async function streamAnalyzeDocument(
     (rawEvent) => dispatchAnalyzeEvent(rawEvent, handlers),
     handlers.onError,
   );
+}
+
+/**
+ * POST `/api/transcribe` (an audio `Blob`, as `multipart/form-data`) and return
+ * the transcribed text. Not SSE, unlike the endpoints above — faster-whisper
+ * only produces a result once the whole recording has been decoded, so a
+ * single JSON response (`{"text": "..."}`) is all there is to read; see
+ * `api/routers/transcribe.py`'s docstring for why this endpoint isn't streamed.
+ */
+export async function transcribeAudio(audio: Blob, signal?: AbortSignal): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", audio, "recording.webm");
+
+  const response = await fetch(`${API_BASE_URL}/api/transcribe`, {
+    method: "POST",
+    body: formData,
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractErrorMessage(response));
+  }
+
+  const data = (await response.json()) as { text: string };
+  return data.text;
 }
 
 /** Shared response-validation + SSE read loop for both streaming endpoints above. */
@@ -137,6 +216,31 @@ function dispatchAnalyzeEvent(rawEvent: string, handlers: AnalyzeStreamHandlers)
       break;
     case "done":
       handlers.onDone?.();
+      break;
+    case "error":
+      handlers.onError?.(data.message as string);
+      break;
+  }
+}
+
+function dispatchAgentAskEvent(rawEvent: string, handlers: AgentAskStreamHandlers): void {
+  const lines = rawEvent.split("\n");
+  const eventLine = lines.find((line) => line.startsWith("event: "));
+  const dataLine = lines.find((line) => line.startsWith("data: "));
+  if (!eventLine || !dataLine) return;
+
+  const event = eventLine.slice("event: ".length);
+  const data = JSON.parse(dataLine.slice("data: ".length));
+
+  switch (event) {
+    case "sources":
+      handlers.onSources?.(data as AgentSourcesPayload);
+      break;
+    case "token":
+      handlers.onToken?.(data.text as string);
+      break;
+    case "done":
+      handlers.onDone?.(data.answer_found as boolean);
       break;
     case "error":
       handlers.onError?.(data.message as string);
