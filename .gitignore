@@ -1,0 +1,7 @@
+# Repo-root safety net: these live alongside the tracked projects
+# (avia_ai/, hybrid_rag/, etc.) but must never be staged accidentally.
+.venv/
+venv/
+delivery_drone/
+AI Travel Agent Project.pdf
+.DS_Store

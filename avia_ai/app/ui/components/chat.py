@@ -106,6 +106,37 @@ def _run_turn(text: str) -> str | None:
     return None
 
 
+def _send(text: str) -> None:
+    """Render the user bubble, run the turn, and reveal the reply."""
+    _render_bubble("user", text)
+    with st.spinner("Avia AI o'ylayapti..."):
+        reply = _run_turn(text)
+    if reply:
+        _reveal_assistant_reply(reply)
+    st.rerun()
+
+
+def _render_voice_draft(draft: str) -> None:
+    """Editable preview of a just-transcribed voice message.
+
+    ``st.chat_input`` can't be pre-filled programmatically (Streamlit has
+    no API for it), so a transcribed voice message can't "type itself"
+    into the real chat box. This is the closest honest equivalent: the
+    recognized text lands in an editable box the user can fix a
+    mis-transcription in before it's actually sent, instead of it being
+    silently auto-submitted.
+    """
+    st.caption("🎤 Ovozdan aniqlangan matn — kerak bo'lsa tahrirlab, yuboring:")
+    edited = st.text_area("Ovozli xabar", value=draft, key="voice_draft_box", label_visibility="collapsed")
+    col1, col2 = st.columns([1, 5])
+    if col1.button("Bekor qilish", key="voice_draft_cancel"):
+        del st.session_state["voice_draft"]
+        st.rerun()
+    if col2.button("➤ Yuborish", key="voice_draft_send", type="primary"):
+        del st.session_state["voice_draft"]
+        _send(edited)
+
+
 def render_chat() -> None:
     """Render the full chat history and the input box for new turns."""
     for message in _current_messages():
@@ -117,6 +148,10 @@ def render_chat() -> None:
     last_error = st.session_state.pop("last_error", None)
     if last_error:
         render_notice(last_error, title="Nimadir xato ketdi")
+
+    if draft := st.session_state.get("voice_draft"):
+        _render_voice_draft(draft)
+        return
 
     submission = st.chat_input(
         _PLACEHOLDER,
@@ -139,6 +174,7 @@ def render_chat() -> None:
             title="Fayl qabul qilindi",
             kind="info",
         )
+
     if audio is not None:
         with st.spinner("Ovozli xabar matnga aylantirilmoqda..."):
             try:
@@ -151,8 +187,8 @@ def render_chat() -> None:
                 )
                 transcribed = ""
         if transcribed:
-            text = transcribed
-            render_notice(f'🎤 Aniqlangan matn: "{transcribed}"', title="Ovozli xabar", kind="info")
+            st.session_state["voice_draft"] = transcribed
+            st.rerun()
         elif not text:
             render_notice(
                 "Ovozli xabarda matn aniqlanmadi. Iltimos qayta urinib ko'ring yoki matn bilan yozing.",
@@ -163,10 +199,4 @@ def render_chat() -> None:
     if not text:
         return
 
-    _render_bubble("user", text)
-    with st.spinner("Avia AI o'ylayapti..."):
-        reply = _run_turn(text)
-
-    if reply:
-        _reveal_assistant_reply(reply)
-    st.rerun()
+    _send(text)

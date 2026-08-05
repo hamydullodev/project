@@ -69,6 +69,14 @@ def inject_custom_css() -> None:
         button[kind]:active {{
             transform: translateY(0px) scale(0.98);
         }}
+        button[kind="primary"] {{
+            background: {theme.ACCENT_GRADIENT} !important;
+            border: none !important;
+            color: white !important;
+        }}
+        button[kind="primary"]:hover {{
+            filter: brightness(1.08);
+        }}
 
         /* --- Brand --- */
         .avia-logo {{
