@@ -2,7 +2,7 @@
 
 # AI Pharmacy 💊
 
-**AI-powered medicine search & price comparison across Uzbekistan's online pharmacies — runs on a fully local LLM, never gives medical advice.**
+**O'zbekiston internet dorixonalari bo'yicha AI yordamida dori qidirish va narx taqqoslash — to'liq lokal LLM asosida ishlaydi, tibbiy maslahat bermaydi.**
 
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-backend-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -15,11 +15,11 @@
 
 ---
 
-> 🟢 **Status: Active** — core features are built and manually verified end-to-end. See [Roadmap](#-roadmap) for what's next.
+> 🟢 **Holati: Faol** — asosiy funksiyalar tayyor va qo'lda sinovdan o'tkazilgan. Keyingi rejalar uchun [Roadmap](#-roadmap) bo'limiga qarang.
 
-## 📖 Contents
+## 📖 Mundarija
 
-[Demo](#-demo) · [Screenshots](#-screenshots) · [Why this project](#-why-this-project) · [Features](#-features) · [Architecture](#-architecture) · [How the AI works](#-how-the-ai-works) · [Tech stack](#-tech-stack) · [Project structure](#-project-structure) · [Installation](#-installation) · [Environment variables](#-environment-variables) · [Run locally](#-run-locally) · [Roadmap](#-roadmap) · [License](#-license) · [Author](#-author)
+[Demo](#-demo) · [Skrinshotlar](#-skrinshotlar) · [Nega bu loyiha](#-nega-bu-loyiha) · [Funksiyalar](#-funksiyalar) · [Arxitektura](#-arxitektura) · [AI qanday ishlaydi](#-ai-qanday-ishlaydi) · [Texnologiyalar](#-texnologiyalar) · [Loyiha tuzilishi](#-loyiha-tuzilishi) · [O'rnatish](#-ornatish) · [Muhit o'zgaruvchilari](#-muhit-ozgaruvchilari) · [Ishga tushirish](#-ishga-tushirish) · [Roadmap](#-roadmap) · [Litsenziya](#-litsenziya) · [Muallif](#-muallif)
 
 ---
 
@@ -31,119 +31,119 @@
 
 </div>
 
-<sub>Placeholder — `docs/assets/demo.gif`. Flow it will show: Home (hero + chat) → natural-language medicine search across 3 live pharmacies → product cards with cheapest/best-value badges → Compare Prices table.</sub>
+<sub>Joy egallovchi (placeholder) — `docs/assets/demo.gif`. Ko'rsatiladigan oqim: Bosh sahifa (hero + chat) → 3 ta jonli dorixonadan tabiiy tilda qidiruv → eng arzon/eng yaxshi tanlov belgili mahsulot kartalari → Compare Prices jadvali.</sub>
 
-## 🖼 Screenshots
+## 🖼 Skrinshotlar
 
-| Home | Search |
+| Bosh sahifa | Qidiruv |
 |---|---|
 | `docs/assets/screenshot-home.png` | `docs/assets/screenshot-search.png` |
 
-| Results | Comparison |
+| Natijalar | Taqqoslash |
 |---|---|
 | `docs/assets/screenshot-results.png` | `docs/assets/screenshot-compare.png` |
 
-## 🧭 Why this project
+## 🧭 Nega bu loyiha
 
-Prices for the same medicine differ across every Uzbekistan online pharmacy, and nobody shows you the cheapest one without checking each site by hand. AI Pharmacy fixes that with a conversational agent — but it draws a hard line most "AI health" demos don't: **it never diagnoses, never recommends treatment, and never decides what to take.** It only helps with the purchasing decision — price, brand, dosage, store.
+Bir xil dorining narxi O'zbekistondagi har bir internet dorixonasida boshqacha, va hech kim har bir saytni qo'lda tekshirmasdan turib eng arzonini ko'rsatib bermaydi. AI Pharmacy buni suhbat orqali ishlaydigan agent bilan hal qiladi — lekin ko'pchilik "AI health" demolaridan farqli o'laroq, qat'iy chegara qo'yadi: **tashxis qo'ymaydi, davolash usulini tavsiya qilmaydi va nima qabul qilish kerakligini hal qilmaydi.** Faqat xarid qarorida — narx, brend, doza, do'kon — yordam beradi.
 
-The second hard rule: the LLM **never invents** a product name or price. It only decides *which tool to call*; every fact comes from a live scrape. If the small local model still misreports a tool's result, a code-level **grounding safeguard** (`app/agent/graph.py`) discards the model's prose and rebuilds the answer deterministically from the tool's raw JSON.
+Ikkinchi qat'iy qoida: LLM hech qachon mahsulot nomi yoki narxini **o'ylab topmaydi**. U faqat *qaysi tool'ni chaqirishni* hal qiladi; har bir fakt jonli skreyplashdan keladi. Kichik lokal model baribir tool natijasini noto'g'ri qayta hikoya qilib qo'ysa ham, kod darajasidagi **grounding safeguard** (`app/agent/graph.py`) modelning matnini rad etib, javobni tool'ning xom JSON natijasidan deterministik tarzda qayta quradi.
 
-## ✨ Features
+## ✨ Funksiyalar
 
 <table>
 <tr>
 <td width="33%">
 
-**💊 AI Medicine Search**
-Natural-language queries across 3 real Uzbekistan pharmacies at once.
+**💊 AI dori qidiruv**
+Tabiiy tilda so'rov — bir vaqtning o'zida 3 ta real dorixonadan.
 
 </td>
 <td width="33%">
 
-**💰 Price Comparison**
-Side-by-side table with cheapest & best-value (price/unit) badges.
+**💰 Narx taqqoslash**
+Eng arzon va eng yaxshi tanlov (narx/qadoq) belgili jadval.
 
 </td>
 <td width="33%">
 
-**🏥 Pharmacy Comparison**
-OXYmed · PharmaClick · Europharm, searched in parallel.
-
-</td>
-</tr>
-<tr>
-<td width="33%">
-
-**🗣️ Natural Language Search**
-"Omega-3 under 100,000 so'm" just works — no filters UI required.
-
-</td>
-<td width="33%">
-
-**⚡ Fast Search**
-15-minute SQLite cache means repeat queries skip the live scrape.
-
-</td>
-<td width="33%">
-
-**📊 Smart Product Analysis**
-Auto-generated summary: cheapest price, market average, % savings.
+**🏥 Dorixonalarni solishtirish**
+OXYmed · PharmaClick · Europharm — parallel qidiriladi.
 
 </td>
 </tr>
 <tr>
 <td width="33%">
 
-**📍 Nearby Pharmacies**
-Directory of connected pharmacies with direct links (honest — no fake geolocation).
+**🗣️ Tabiiy tildagi qidiruv**
+"100 ming so'mgacha Omega-3" — filtr UI kerak emas, shunchaki ishlaydi.
 
 </td>
 <td width="33%">
 
-**❤️ Saved Products**
-One-click favorites, backed by SQLite.
+**⚡ Tez qidiruv**
+15 daqiqalik SQLite kesh — takroriy so'rov jonli skreyplashni chetlab o'tadi.
 
 </td>
 <td width="33%">
 
-**🛡️ Hallucination Guard**
-Every answer is rebuilt from raw tool output, never trusted from model prose.
+**📊 Aqlli tahlil**
+Avtomatik xulosa: eng arzon narx, bozor o'rtachasi, tejash foizi.
+
+</td>
+</tr>
+<tr>
+<td width="33%">
+
+**📍 Yaqin dorixonalar**
+Ulangan dorixonalar ro'yxati, to'g'ridan-to'g'ri havolalar bilan (soxta geolokatsiyasiz).
+
+</td>
+<td width="33%">
+
+**❤️ Saqlangan mahsulotlar**
+Bir bosishda sevimlilarga qo'shish, SQLite-backed.
+
+</td>
+<td width="33%">
+
+**🛡️ Hallyutsinatsiyaga qarshi himoya**
+Har bir javob tool'ning xom natijasidan quriladi, model matniga ishonilmaydi.
 
 </td>
 </tr>
 </table>
 
-## 🏗 Architecture
+## 🏗 Arxitektura
 
 ```mermaid
 flowchart TD
-    U["🧑 User"] -->|chat| UI["🖥️ Streamlit UI<br/>(Home · Search · Compare · Nearby · Saved · History · Settings)"]
+    U["🧑 Foydalanuvchi"] -->|chat| UI["🖥️ Streamlit UI<br/>(Home · Search · Compare · Nearby · Saved · History · Settings)"]
     UI -->|HTTP /chat| API["⚡ FastAPI backend"]
     API --> GRAPH["🧠 LangGraph Agent"]
-    GRAPH -->|prompt + tools| LLM["🦙 Ollama (local LLM)"]
-    LLM -->|tool call| TOOLS["🛠️ Tool layer"]
-    TOOLS --> SCRAPERS["🕸️ Pharmacy scrapers<br/>OXYmed · PharmaClick · Europharm"]
-    TOOLS --> WEBSEARCH["🌍 Web search (DuckDuckGo)"]
+    GRAPH -->|prompt + tool'lar| LLM["🦙 Ollama (lokal LLM)"]
+    LLM -->|tool chaqiruvi| TOOLS["🛠️ Tools qatlami"]
+    TOOLS --> SCRAPERS["🕸️ Dorixona skreyperlari<br/>OXYmed · PharmaClick · Europharm"]
+    TOOLS --> WEBSEARCH["🌍 Veb-qidiruv (DuckDuckGo)"]
     SCRAPERS --> CACHE[("💾 SQLite<br/>product_cache · search_history<br/>favorites · price_alerts")]
-    TOOLS -->|real data only| GRAPH
-    GRAPH --> GUARD["🛡️ Grounding safeguard<br/>(rebuilds answer from tool JSON)"]
+    TOOLS -->|faqat real ma'lumot| GRAPH
+    GRAPH --> GUARD["🛡️ Grounding safeguard<br/>(tool JSON'dan javobni qayta quradi)"]
     GUARD --> API
     API --> UI
     UI --> U
 ```
 
-## 🧠 How the AI works
+## 🧠 AI qanday ishlaydi
 
-**Search workflow, step by step:**
+**Qidiruv jarayoni, qadam-baqadam:**
 
-1. User asks in plain language — *"find the cheapest Omega-3"*.
-2. The model is **forced** to call a tool on the first step of every turn (`tool_choice="any"`) — a small local model can't skip straight to a possibly-fabricated free-text answer.
-3. The chosen tool (`search_products_tool`, `filter_products_tool`, `compare_products_tool`, `find_cheapest_tool`, `product_details_tool`, or `web_search_tool`) hits a real pharmacy site (or a 15-minute cache) and returns real data.
-4. The final answer is rebuilt **deterministically from the tool's raw JSON** — never from the model's own retelling — so a small model's summarization mistakes never reach the user.
-5. The UI reveals the answer word-by-word and renders any returned products as cards with cheapest/best-value badges.
+1. Foydalanuvchi oddiy tilda so'raydi — *"eng arzon Omega-3'ni top"*.
+2. Har bir suhbat burilishining birinchi qadamida model **majburiy** tool chaqirishga undaladi (`tool_choice="any"`) — kichik lokal model to'g'ridan-to'g'ri, ehtimol to'qilgan, erkin javobga o'tib keta olmaydi.
+3. Tanlangan tool (`search_products_tool`, `filter_products_tool`, `compare_products_tool`, `find_cheapest_tool`, `product_details_tool` yoki `web_search_tool`) haqiqiy dorixona saytiga (yoki 15 daqiqalik keshga) murojaat qilib, real ma'lumot qaytaradi.
+4. Yakuniy javob **tool'ning xom JSON natijasidan deterministik tarzda** quriladi — modelning o'zi qayta hikoya qilgan matnidan emas — shunda kichik modelning xulosalash xatolari foydalanuvchiga yetib bormaydi.
+5. UI javobni so'z-so'z animatsiya bilan ochadi va qaytgan mahsulotlarni eng arzon/eng yaxshi tanlov belgili kartalar sifatida ko'rsatadi.
 
-## 🧰 Tech Stack
+## 🧰 Texnologiyalar
 
 ![Python](https://img.shields.io/badge/-Python-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/-FastAPI-009688?logo=fastapi&logoColor=white)
@@ -154,44 +154,44 @@ flowchart TD
 ![BeautifulSoup](https://img.shields.io/badge/-BeautifulSoup-43B02A)
 ![Ruff](https://img.shields.io/badge/-Ruff-D7FF64?logo=ruff&logoColor=black)
 
-| Layer | Choice |
+| Qatlam | Tanlov |
 |---|---|
-| Language / runtime | Python 3.12 |
-| Agent orchestration | LangGraph (tool-calling loop + SQLite-backed conversation memory) |
-| LLM | Ollama, local — `llama3.2:3b` (no cloud API calls) |
+| Til / runtime | Python 3.12 |
+| Agent orkestratsiyasi | LangGraph (tool-chaqiruv sikli + SQLite suhbat xotirasi) |
+| LLM | Ollama, lokal — `llama3.2:3b` (bulutli API chaqiruvi yo'q) |
 | Backend API | FastAPI |
-| Frontend | Streamlit — multi-page (`st.navigation`), shared design system with sibling AI products |
-| Data acquisition | BeautifulSoup scrapers (3 pharmacies) + DuckDuckGo web search |
-| Caching / storage | SQLite (product cache, search history, favorites, price alerts) |
-| Code quality | Ruff (lint + format) |
+| Frontend | Streamlit — ko'p sahifali (`st.navigation`), qardosh AI mahsulotlar bilan bir xil dizayn tizimi |
+| Ma'lumot yig'ish | BeautifulSoup skreyperlari (3 ta dorixona) + DuckDuckGo veb-qidiruv |
+| Kesh / saqlash | SQLite (mahsulot keshi, qidiruv tarixi, sevimlilar, narx signallari) |
+| Kod sifati | Ruff (lint + format) |
 
-## 📁 Project Structure
+## 📁 Loyiha tuzilishi
 
 ```
 ai_pharmacy/
 ├── app/
-│   ├── agent/            # LangGraph state, nodes (Ollama + tool binding), graph + grounding safeguard
-│   ├── tools/             # @tool functions the LLM can call
-│   │   └── scrapers/       # OXYmed / PharmaClick / Europharm scrapers
+│   ├── agent/            # LangGraph state, node'lar (Ollama + tool bind), graph + grounding safeguard
+│   ├── tools/             # LLM chaqira oladigan @tool funksiyalar
+│   │   └── scrapers/       # OXYmed / PharmaClick / Europharm skreyperlari
 │   ├── database/           # SQLite: product_cache, search_history, favorites, price_alerts
-│   ├── memory/              # LangGraph SQLite checkpoint (conversation memory)
-│   ├── ui/                  # Streamlit app
-│   │   ├── theme.py          # color / radius / shadow / font design tokens
+│   ├── memory/              # LangGraph SQLite checkpoint (suhbat xotirasi)
+│   ├── ui/                  # Streamlit ilova
+│   │   ├── theme.py          # rang / radius / soya / shrift dizayn tokenlari
 │   │   ├── styles.py          # inject_custom_css() — global CSS
-│   │   ├── state.py            # session memory (last search, compare list)
-│   │   ├── utils.py             # backend HTTP client, price/badge logic
-│   │   ├── assets/                # logo (P + capsule mark, transparent)
+│   │   ├── state.py            # sessiya xotirasi (oxirgi qidiruv, compare ro'yxati)
+│   │   ├── utils.py             # backend HTTP klienti, narx/belgi hisob-kitoblari
+│   │   ├── assets/                # logo (P + kapsula belgisi, shaffof fon)
 │   │   ├── components/             # topbar, sidebar, hero, chat, cards, comparison, animations, notification
 │   │   └── pages/                   # Home, Medicine Search, Compare, Nearby, Saved, History, Settings
-│   └── config.py           # centralized settings (.env-driven)
-├── docs/                  # screenshots, demo GIF, presentation docs
-├── main.py               # FastAPI entry point — python main.py
+│   └── config.py           # markazlashgan sozlamalar (.env asosida)
+├── docs/                  # skrinshotlar, demo GIF, taqdimot hujjatlari
+├── main.py               # FastAPI kirish nuqtasi — python main.py
 ├── requirements.txt
-├── requirements-dev.txt  # lint/format tooling (ruff)
-└── pyproject.toml        # ruff config
+├── requirements-dev.txt  # lint/format vositalari (ruff)
+└── pyproject.toml        # ruff konfiguratsiyasi
 ```
 
-## 📦 Installation
+## 📦 O'rnatish
 
 ```bash
 git clone https://github.com/hamydullodev/project.git
@@ -201,17 +201,17 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-### Ollama (required — local LLM)
+### Ollama (majburiy — lokal LLM)
 
 ```bash
-brew install ollama        # or https://ollama.com/download
+brew install ollama        # yoki https://ollama.com/download
 ollama serve
-ollama pull llama3.2:3b     # or: ollama pull qwen2.5
+ollama pull llama3.2:3b     # yoki: ollama pull qwen2.5
 ```
 
-## 🔑 Environment Variables
+## 🔑 Muhit o'zgaruvchilari
 
-Everything lives in `.env` (copy from `.env.example`) — nothing is hardcoded.
+Hammasi `.env` faylida (`.env.example`dan nusxa oling) — hech narsa kodga qattiq yozilmagan.
 
 ```bash
 OLLAMA_BASE_URL=http://localhost:11434
@@ -226,43 +226,43 @@ API_PORT=8020
 REQUEST_TIMEOUT=10
 ```
 
-Full list: `app/config.py`.
+To'liq ro'yxat: `app/config.py`.
 
-## ▶️ Run Locally
+## ▶️ Ishga tushirish
 
 ```bash
-ollama serve                                                                  # terminal 1
-source .venv/bin/activate && python main.py                                  # terminal 2 — FastAPI, http://localhost:8020
-source .venv/bin/activate && streamlit run app/ui/app.py --server.port 8503  # terminal 3 — UI
+ollama serve                                                                  # 1-terminal
+source .venv/bin/activate && python main.py                                  # 2-terminal — FastAPI, http://localhost:8020
+source .venv/bin/activate && streamlit run app/ui/app.py --server.port 8503  # 3-terminal — UI
 ```
 
-Open `http://localhost:8503` in your browser.
+Brauzerda `http://localhost:8503` oching.
 
-> Ports are configurable via `API_PORT` in `.env`. If `8020`/`8503` are busy, change the port and pass `--server.port` accordingly.
+> Portlar `.env`dagi `API_PORT` orqali sozlanadi. `8020`/`8503` band bo'lsa, portni o'zgartiring va `--server.port`ni mos ravishda bering.
 
 ## 🗺 Roadmap
 
-**Current limitations**
+**Joriy cheklovlar**
 
-- Only 3 pharmacies connected; scrapers depend on site HTML structure and need updates if a site redesigns.
-- "Nearby Pharmacies" doesn't show live distance/branch location yet — it links to each connected pharmacy's official site.
-- The `price_alerts` storage layer exists, but no background job triggers alerts automatically yet.
-- No authentication — SQLite is built for local, single-process use.
+- Faqat 3 ta dorixona ulangan; skreyperlar sayt HTML tuzilishiga bog'liq — sayt dizayni o'zgarsa yangilash kerak.
+- "Nearby Pharmacies" hozircha jonli masofa/filial joylashuvini ko'rsatmaydi — faqat ulangan dorixonalarning rasmiy saytlariga havola beradi.
+- `price_alerts` saqlash qatlami tayyor, lekin uni avtomatik trigger qiluvchi background job hali yo'q.
+- Autentifikatsiya yo'q — SQLite bitta jarayonli lokal foydalanish uchun mo'ljallangan.
 
-**Planned**
+**Rejalar**
 
-- [ ] Background job to auto-check saved price alerts
-- [ ] A 4th pharmacy (if an official API becomes available)
-- [ ] PDF export for comparison reports
-- [ ] Move product cache / conversation memory to PostgreSQL for multi-user deployment
-- [ ] Unit tests for scrapers (mocked HTTP responses)
+- [ ] Saqlangan narx signallarini avtomatik tekshiruvchi background job
+- [ ] 4-chi dorixona (rasmiy API mavjud bo'lsa)
+- [ ] Taqqoslash hisobotini PDF qilib eksport qilish
+- [ ] Ko'p foydalanuvchili joylashtirish uchun mahsulot keshi/suhbat xotirasini PostgreSQL'ga ko'chirish
+- [ ] Skreyperlar uchun unit testlar (HTTP javoblarini mock qilib)
 
-## 📄 License
+## 📄 Litsenziya
 
-MIT — see [`LICENSE`](LICENSE).
+MIT — qarang [`LICENSE`](LICENSE).
 
-## 👤 Author
+## 👤 Muallif
 
-**Abduroshyd** — [abduroshyd@gmail.com](mailto:abduroshyd@gmail.com)
+**Jumanov Hamydullo** — [jumanovhamydullo@gmail.com](mailto:jumanovhamydullo@gmail.com)
 
-Part of a small portfolio of local-LLM AI agents — see the sibling **Avia AI** (travel search) project in this same repository.
+Lokal-LLM AI agentlar portfoliosining bir qismi — shu repozitoriydagi qardosh **Avia AI** (sayohat qidiruvi) loyihasiga ham qarang.

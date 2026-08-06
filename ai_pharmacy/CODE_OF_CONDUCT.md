@@ -42,7 +42,7 @@ the project in public spaces.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the maintainers at **abduroshyd@gmail.com**. All complaints
+reported to the maintainers at **jumanovhamydullo@gmail.com**. All complaints
 will be reviewed and investigated promptly and fairly.
 
 ## Attribution

@@ -8,7 +8,7 @@ This is an actively developed personal/portfolio project on a single
 ## Reporting a Vulnerability
 
 Please **do not** open a public GitHub issue for a security
-vulnerability. Instead, email **abduroshyd@gmail.com** with:
+vulnerability. Instead, email **jumanovhamydullo@gmail.com** with:
 
 - A description of the vulnerability and its potential impact
 - Steps to reproduce it
