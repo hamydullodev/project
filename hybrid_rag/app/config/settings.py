@@ -154,6 +154,30 @@ class Settings(BaseSettings):
     reranker_model: str = Field(default="cross-encoder/ms-marco-MiniLM-L-6-v2")
     reranker_device: Literal["auto", "cpu", "cuda", "mps"] = "auto"
 
+    # -- Speech-to-text (local Whisper, via faster-whisper/CTranslate2) --------
+    # Powers the search box's mic button (`POST /api/transcribe`) — fully
+    # local, same "no cloud dependency" spirit as LLM_PROVIDER=ollama. No
+    # "mps" option here (unlike embedding/reranker devices above): CTranslate2,
+    # faster-whisper's inference backend, only supports cpu/cuda.
+    whisper_model_size: str = Field(
+        default="small",
+        description="faster-whisper model size (tiny/base/small/medium/large-v3, or a "
+        "distil-whisper variant). 'small' balances Uzbek transcription accuracy against "
+        "download size (~500MB) and CPU-inference speed for a local-first default.",
+    )
+    whisper_device: Literal["auto", "cpu", "cuda"] = "auto"
+    whisper_compute_type: str = Field(
+        default="int8",
+        description="CTranslate2 quantization: int8 (fastest/smallest, negligible accuracy "
+        "loss, good CPU default) / float16 (GPU) / float32 (max precision).",
+    )
+    whisper_language: str | None = Field(
+        default="uz",
+        description="ISO-639-1 language code hint (Uzbek by default) — skips Whisper's "
+        "language auto-detection step, which is both faster and more reliable than "
+        "detection for a niche language. Set to null to auto-detect.",
+    )
+
     # -- Chunking -------------------------------------------------------------
     chunk_size: int = Field(default=800, gt=0)
     chunk_overlap: int = Field(default=150, ge=0)
@@ -204,6 +228,12 @@ class Settings(BaseSettings):
         default=15_000_000,
         gt=0,
         description="Maximum accepted size (bytes) for a document-analysis upload.",
+    )
+    max_audio_upload_size_bytes: int = Field(
+        default=25_000_000,
+        gt=0,
+        description="Maximum accepted size (bytes) for a POST /api/transcribe audio upload "
+        "(a mic recording rarely exceeds a few MB, but this caps pathological cases).",
     )
     max_context_chars: int = Field(
         default=6000,

@@ -35,9 +35,11 @@ from __future__ import annotations
 from app.config import settings
 from app.llm import GeminiLLM, OllamaLLM, get_llm
 from app.rag import RAGPipeline
+from app.transcription import WhisperTranscriber
 
 _pipeline: RAGPipeline | None = None
 _llm: OllamaLLM | GeminiLLM | None = None
+_transcriber: WhisperTranscriber | None = None
 
 
 def get_pipeline() -> RAGPipeline:
@@ -78,3 +80,21 @@ def reset_llm_cache() -> None:
     """Force the next `get_llm_cached()` call to construct a fresh instance. Test-only."""
     global _llm
     _llm = None
+
+
+def get_transcriber_cached() -> WhisperTranscriber:
+    """Return the shared `WhisperTranscriber` for `/api/transcribe`, constructing it on
+    first (successful) call. Same lazy-singleton, don't-cache-failure pattern as
+    `get_llm_cached()` above — loading Whisper weights is expensive, so this is built
+    once per process rather than once per request.
+    """
+    global _transcriber
+    if _transcriber is None:
+        _transcriber = WhisperTranscriber()
+    return _transcriber
+
+
+def reset_transcriber_cache() -> None:
+    """Force the next `get_transcriber_cached()` call to construct a fresh instance. Test-only."""
+    global _transcriber
+    _transcriber = None

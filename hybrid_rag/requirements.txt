@@ -34,6 +34,9 @@ rank_bm25>=0.2.2
 ollama>=0.2             # local LLM (LLM_PROVIDER=ollama)
 google-genai>=1.0        # hosted Gemini LLM (LLM_PROVIDER=gemini)
 
+# --- Speech-to-text (local, POST /api/transcribe) ------------------------------
+faster-whisper>=1.0     # CTranslate2-backed Whisper inference (mic button transcription)
+
 # --- Document parsing ----------------------------------------------------------
 pymupdf>=1.24          # PDF text/layout extraction AND page rendering for OCR fallback
 python-docx>=1.1        # DOCX parsing
