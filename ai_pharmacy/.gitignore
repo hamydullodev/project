@@ -1,0 +1,32 @@
+# --- Environment & secrets ---------------------------------------------
+.env
+.env.local
+*.pem
+
+# --- Python --------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# --- App-local data --------------------------------------------------------
+app/database/*.db
+app/memory/*.sqlite*
+
+# --- Testing / linting -----------------------------------------------------
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Editors / OS ----------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

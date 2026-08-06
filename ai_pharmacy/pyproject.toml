@@ -1,0 +1,10 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+# A practical, uncontroversial set: pyflakes, pycodestyle errors, import
+# sorting, and pyupgrade. Deliberately not enabling stricter/opinionated
+# rule families that would demand a larger refactor for no functional
+# benefit to this project.
+select = ["E", "F", "I", "UP"]

@@ -1,0 +1,4 @@
+# Dev-only tooling (lint/format). Runtime deps live in requirements.txt —
+# install both for local development:
+#   pip install -r requirements.txt -r requirements-dev.txt
+ruff>=0.6.0
